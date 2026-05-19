@@ -6,6 +6,7 @@ import 'dart:io';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
 import 'package:flutter/services.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 
 class FullscreenCameraScreen extends StatefulWidget {
   final CameraController controller;
@@ -36,6 +37,49 @@ class _FullscreenCameraScreenState extends State<FullscreenCameraScreen> {
     super.dispose();
   }
 
+  Future<bool> _requestSavePermission() async {
+    bool hasPermission = false;
+
+    if (Platform.isAndroid) {
+      final androidInfo = await DeviceInfoPlugin().androidInfo;
+      if (androidInfo.version.sdkInt <= 28) {
+        final status = await Permission.storage.request();
+        hasPermission = status.isGranted;
+      } else {
+        // Android 10+ (API 29+): Scoped storage does not require explicit permission to save photos
+        hasPermission = true;
+      }
+    } else if (Platform.isIOS) {
+      final status = await Permission.photosAddOnly.request();
+      if (status.isGranted || status.isLimited) {
+        hasPermission = true;
+      } else {
+        final fallback = await Permission.photos.request();
+        hasPermission = fallback.isGranted || fallback.isLimited;
+      }
+    } else {
+      hasPermission = true;
+    }
+
+    if (!hasPermission && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Permission denied. Gallery access is needed to save photos.'),
+          action: SnackBarAction(
+            label: 'Settings',
+            textColor: Theme.of(context).colorScheme.primary,
+            onPressed: () => openAppSettings(),
+          ),
+          backgroundColor: Colors.black.withOpacity(0.9),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    }
+    return hasPermission;
+  }
+
   void _toggleFreeze() {
     setState(() {
       _isFrozen = !_isFrozen;
@@ -63,16 +107,9 @@ class _FullscreenCameraScreenState extends State<FullscreenCameraScreen> {
   Future<void> _captureComparison() async {
     if (_isCapturing) return;
 
-    // Request permissions
-    final status = await Permission.photos.request();
-    if (!status.isGranted && !status.isLimited) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Permission denied to save photos')),
-        );
-      }
-      return;
-    }
+    // Request dynamic saving permissions
+    final hasPermission = await _requestSavePermission();
+    if (!hasPermission) return;
 
     setState(() => _isCapturing = true);
     HapticFeedback.mediumImpact();
@@ -143,9 +180,26 @@ class _FullscreenCameraScreenState extends State<FullscreenCameraScreen> {
       }
     }
 
-    Widget baseContent = _importedImage != null
-        ? Image.file(_importedImage!, fit: BoxFit.cover, width: double.infinity, height: double.infinity)
-        : CameraPreview(widget.controller);
+    Widget baseContent;
+    if (_importedImage != null) {
+      baseContent = Image.file(
+        _importedImage!,
+        fit: BoxFit.contain,
+      );
+    } else {
+      final isPortrait = MediaQuery.of(context).orientation == Orientation.portrait;
+      double previewRatio = widget.controller.value.aspectRatio;
+      if (isPortrait) {
+        previewRatio = 1 / previewRatio;
+      }
+      
+      baseContent = Center(
+        child: AspectRatio(
+          aspectRatio: previewRatio,
+          child: CameraPreview(widget.controller),
+        ),
+      );
+    }
 
     Widget content = Container(
       width: double.infinity,

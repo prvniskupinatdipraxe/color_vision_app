@@ -95,7 +95,7 @@ class AboutScreen extends StatelessWidget {
               const SizedBox(height: 40),
               Center(
                 child: Text(
-                  '© 2024 Vision Assist Pro. All rights reserved.',
+                  '© 2026 Vision Assist Pro. All rights reserved.',
                   style: TextStyle(
                     color: isDark ? Colors.white24 : Colors.black26,
                     fontSize: 12,
