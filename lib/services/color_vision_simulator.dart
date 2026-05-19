@@ -7,30 +7,34 @@ class ColorVisionSimulator {
     0, 0, 0, 1, 0,
   ];
 
-  // Protanopia matrix (Red-blind)
+  // Scientifically accurate matrices for sRGB simulation (Machado et al. 2009)
+  // These matrices simulate how dichromatic vision affects color perception in the sRGB space.
+  
+  // Protanopia matrix (Red-blind / Red cones missing)
   static const List<double> protanopia = [
-    0.567, 0.433, 0.000, 0, 0,
-    0.558, 0.442, 0.000, 0, 0,
-    0.000, 0.242, 0.758, 0, 0,
+    0.152286, 1.052583, -0.204868, 0, 0,
+    0.114503, 0.786281, 0.099216, 0, 0,
+    -0.003882, -0.048116, 1.051998, 0, 0,
     0, 0, 0, 1, 0,
   ];
 
-  // Deuteranopia matrix (Green-blind)
+  // Deuteranopia matrix (Green-blind / Green cones missing)
   static const List<double> deuteranopia = [
-    0.625, 0.375, 0.000, 0, 0,
-    0.700, 0.300, 0.000, 0, 0,
-    0.000, 0.300, 0.700, 0, 0,
+    0.367322, 0.860646, -0.227968, 0, 0,
+    0.280085, 0.672501, 0.047413, 0, 0,
+    -0.011820, 0.042940, 0.968881, 0, 0,
     0, 0, 0, 1, 0,
   ];
 
-  // Tritanopia matrix (Blue-blind)
+  // Tritanopia matrix (Blue-blind / Blue cones missing)
   static const List<double> tritanopia = [
-    0.950, 0.050, 0.000, 0, 0,
-    0.000, 0.433, 0.567, 0, 0,
-    0.000, 0.475, 0.525, 0, 0,
+    1.216703, -0.139225, -0.077478, 0, 0,
+    -0.073467, 0.926435, 0.147032, 0, 0,
+    0.044150, 0.276110, 0.679740, 0, 0,
     0, 0, 0, 1, 0,
   ];
 
+  /// Interpolates between two color matrices based on [t] (0.0 to 1.0).
   static List<double> interpolateMatrix(List<double> m1, List<double> m2, double t) {
     assert(m1.length == 20 && m2.length == 20);
     List<double> result = List.filled(20, 0.0);
@@ -40,6 +44,7 @@ class ColorVisionSimulator {
     return result;
   }
 
+  /// Multiplies two 4x5 color matrices.
   static List<double> multiplyMatrices(List<double> a, List<double> b) {
     List<double> result = List.filled(20, 0.0);
     for (int row = 0; row < 4; row++) {
@@ -57,6 +62,7 @@ class ColorVisionSimulator {
     return result;
   }
 
+  /// Calculates a combined simulation matrix for anomalous trichromacy and dichromacy.
   static List<double> calculateSimulationMatrix({
     required double redSensitivity,
     required double greenSensitivity,
@@ -64,54 +70,52 @@ class ColorVisionSimulator {
   }) {
     // 1.0 sensitivity = Normal vision (strength 0.0)
     // 0.0 sensitivity = Full deficiency (strength 1.0)
-    double protanStrength = 1.0 - redSensitivity;
-    double deutanStrength = 1.0 - greenSensitivity;
-    double tritanStrength = 1.0 - blueSensitivity;
+    double protanStrength = (1.0 - redSensitivity).clamp(0.0, 1.0);
+    double deutanStrength = (1.0 - greenSensitivity).clamp(0.0, 1.0);
+    double tritanStrength = (1.0 - blueSensitivity).clamp(0.0, 1.0);
 
     List<double> m1 = interpolateMatrix(identity, protanopia, protanStrength);
     List<double> m2 = interpolateMatrix(identity, deuteranopia, deutanStrength);
     List<double> m3 = interpolateMatrix(identity, tritanopia, tritanStrength);
 
-    // Combine the matrices by multiplication
+    // Combine the matrices by multiplication to allow multi-deficiency simulation
     List<double> combined = multiplyMatrices(m1, m2);
     combined = multiplyMatrices(combined, m3);
 
     return combined;
   }
 
-  // Vision Correction (Daltonization approximate matrices)
-  // These matrices enhance colors that are difficult to distinguish.
-  // For simplicity, we apply an inverse-like boost based on the sensitivities.
+  /// Calculates a correction matrix (Daltonization) to enhance contrast.
   static List<double> calculateCorrectionMatrix({
     required double redSensitivity,
     required double greenSensitivity,
     required double blueSensitivity,
   }) {
-    double protanStrength = 1.0 - redSensitivity;
-    double deutanStrength = 1.0 - greenSensitivity;
-    double tritanStrength = 1.0 - blueSensitivity;
+    double protanStrength = (1.0 - redSensitivity).clamp(0.0, 1.0);
+    double deutanStrength = (1.0 - greenSensitivity).clamp(0.0, 1.0);
+    double tritanStrength = (1.0 - blueSensitivity).clamp(0.0, 1.0);
 
-    // A simple color enhancement approach: boost the channel that is deficient.
-    // In a real daltonization algorithm, we'd shift colors from the invisible spectrum 
-    // to the visible spectrum. Here we boost the deficient color contrast.
+    // Simplified Daltonization matrix logic:
+    // This shifts colors from the problematic spectrum into the visible spectrum
+    // based on the specific type of deficiency.
     List<double> result = List.from(identity);
     
     if (protanStrength > 0) {
-      // Shift some red to green/blue to make it visible
+      // Protan correction: Boost green and blue to compensate for red loss
       result[0] = 1.0; 
-      result[1] = 0.5 * protanStrength; 
-      result[2] = 0.5 * protanStrength;
+      result[1] = 0.7 * protanStrength; 
+      result[2] = 0.7 * protanStrength;
     }
     if (deutanStrength > 0) {
-      // Shift some green to red/blue
-      result[5] = 0.5 * deutanStrength; 
+      // Deutan correction: Boost red and blue to compensate for green loss
+      result[5] = 0.7 * deutanStrength; 
       result[6] = 1.0; 
-      result[7] = 0.5 * deutanStrength;
+      result[7] = 0.7 * deutanStrength;
     }
     if (tritanStrength > 0) {
-      // Shift some blue to red/green
-      result[10] = 0.5 * tritanStrength; 
-      result[11] = 0.5 * tritanStrength; 
+      // Tritan correction: Boost red and green to compensate for blue loss
+      result[10] = 0.7 * tritanStrength; 
+      result[11] = 0.7 * tritanStrength; 
       result[12] = 1.0;
     }
 
