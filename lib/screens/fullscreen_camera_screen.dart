@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
-import '../widgets/camera_preview_placeholder.dart';
 import '../services/color_vision_simulator.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:image_gallery_saver/image_gallery_saver.dart';
+import 'package:flutter/services.dart';
 
 class FullscreenCameraScreen extends StatefulWidget {
   final CameraController controller;
@@ -22,10 +24,9 @@ class FullscreenCameraScreen extends StatefulWidget {
 class _FullscreenCameraScreenState extends State<FullscreenCameraScreen> {
   bool _showOriginal = false;
   double _intensity = 1.0;
-  
   bool _isFrozen = false;
-  
   File? _importedImage;
+  bool _isCapturing = false;
 
   @override
   void dispose() {
@@ -44,6 +45,7 @@ class _FullscreenCameraScreenState extends State<FullscreenCameraScreen> {
     } else {
       widget.controller.resumePreview();
     }
+    HapticFeedback.selectionClick();
   }
 
   Future<void> _importImage() async {
@@ -52,29 +54,75 @@ class _FullscreenCameraScreenState extends State<FullscreenCameraScreen> {
     if (pickedFile != null) {
       setState(() {
         _importedImage = File(pickedFile.path);
-        _isFrozen = true; // freeze camera so imported image is shown statically
+        _isFrozen = true;
       });
       widget.controller.pausePreview();
     }
   }
 
   Future<void> _captureComparison() async {
-    // Show success animation
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Row(
-          children: [
-            Icon(Icons.check_circle, color: Colors.greenAccent),
-            SizedBox(width: 12),
-            Text('Capture saved to Gallery'),
-          ],
-        ),
-        backgroundColor: Colors.black.withOpacity(0.8),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        duration: const Duration(seconds: 2),
-      ),
-    );
+    if (_isCapturing) return;
+
+    // Request permissions
+    final status = await Permission.photos.request();
+    if (!status.isGranted && !status.isLimited) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Permission denied to save photos')),
+        );
+      }
+      return;
+    }
+
+    setState(() => _isCapturing = true);
+    HapticFeedback.mediumImpact();
+
+    try {
+      XFile file;
+      if (_isFrozen && _importedImage != null) {
+        // If viewing an imported image, just "re-save" or notify
+        // But user asked to capture camera feed.
+        file = XFile(_importedImage!.path);
+      } else {
+        file = await widget.controller.takePicture();
+      }
+
+      final result = await ImageGallerySaver.saveFile(file.path);
+      
+      if (mounted) {
+        final bool isSuccess = result != null && result['isSuccess'] == true;
+        
+        // Show flash effect overlay if needed, but simple Snackbar for now
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                Icon(
+                  isSuccess ? Icons.check_circle : Icons.error,
+                  color: isSuccess ? Colors.greenAccent : Colors.redAccent,
+                ),
+                const SizedBox(width: 12),
+                Text(isSuccess ? 'Photo saved to gallery' : 'Failed to save photo'),
+              ],
+            ),
+            backgroundColor: Colors.black.withOpacity(0.9),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${e.toString()}')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isCapturing = false);
+      }
+    }
   }
 
   @override
@@ -107,18 +155,8 @@ class _FullscreenCameraScreenState extends State<FullscreenCameraScreen> {
     );
 
     if (activeMatrix != null) {
-      content = TweenAnimationBuilder<List<double>>(
-        tween: ColorMatrixTween(
-          begin: ColorVisionSimulator.identity,
-          end: activeMatrix,
-        ),
-        duration: const Duration(milliseconds: 300),
-        builder: (context, currentMatrix, child) {
-          return ColorFiltered(
-            colorFilter: ColorFilter.matrix(currentMatrix),
-            child: child,
-          );
-        },
+      content = ColorFiltered(
+        colorFilter: ColorFilter.matrix(activeMatrix),
         child: content,
       );
     }
@@ -141,6 +179,12 @@ class _FullscreenCameraScreenState extends State<FullscreenCameraScreen> {
             child: content,
           ),
           
+          // Flash effect during capture
+          if (_isCapturing)
+            Positioned.fill(
+              child: Container(color: Colors.white.withOpacity(0.3)),
+            ),
+
           // Top Bar Controls
           Positioned(
             top: MediaQuery.of(context).padding.top + 16,
@@ -154,7 +198,11 @@ class _FullscreenCameraScreenState extends State<FullscreenCameraScreen> {
                   children: [
                     _buildFloatingButton(Icons.image_outlined, _importImage),
                     const SizedBox(width: 12),
-                    _buildFloatingButton(Icons.camera_alt, _captureComparison),
+                    _buildFloatingButton(
+                      _isCapturing ? Icons.hourglass_empty : Icons.camera_alt,
+                      _captureComparison,
+                      isActive: _isCapturing,
+                    ),
                     const SizedBox(width: 12),
                     _buildFloatingButton(
                       _isFrozen ? Icons.play_arrow : Icons.pause,
@@ -291,5 +339,14 @@ class _FullscreenCameraScreenState extends State<FullscreenCameraScreen> {
         ),
       ),
     );
+  }
+}
+
+class ColorMatrixTween extends Tween<List<double>> {
+  ColorMatrixTween({required super.begin, required super.end});
+
+  @override
+  List<double> lerp(double t) {
+    return ColorVisionSimulator.interpolateMatrix(begin!, end!, t);
   }
 }
