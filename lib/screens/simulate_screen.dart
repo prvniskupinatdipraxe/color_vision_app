@@ -24,6 +24,49 @@ class _SimulateScreenState extends State<SimulateScreen> {
     });
   }
 
+  void _showInfoSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => GlassContainer(
+        margin: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.info_outline, color: Theme.of(context).colorScheme.primary),
+                const SizedBox(width: 12),
+                Text(
+                  'Simulate Mode',
+                  style: Theme.of(context).textTheme.headlineSmall,
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Simulate mode recreates how different color blindness types affect real-world vision.',
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.white70),
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('Got it'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final matrix = ColorVisionSimulator.calculateSimulationMatrix(
@@ -39,14 +82,21 @@ class _SimulateScreenState extends State<SimulateScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Simulate',
-                style: Theme.of(context).textTheme.displayMedium,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Experience vision deficiencies',
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.white70),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Text(
+                    'Simulate',
+                    style: Theme.of(context).textTheme.displayMedium,
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    onPressed: () => _showInfoSheet(context),
+                    icon: const Icon(Icons.info_outline, color: Colors.white54, size: 24),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                ],
               ),
               const SizedBox(height: 24),
               CameraPreviewPlaceholder(matrix: matrix),
