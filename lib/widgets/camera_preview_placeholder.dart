@@ -58,49 +58,69 @@ class _CameraPreviewPlaceholderState extends State<CameraPreviewPlaceholder> wit
     Widget content;
 
     if (_isCameraInitialized && controller != null && controller.value.isInitialized) {
+      // Calculate aspect ratio - use native if possible, otherwise default to 3:4
+      // CameraController.value.aspectRatio is usually > 1 (landscape), so we invert it for portrait
+      final double aspectRatio = 1 / controller.value.aspectRatio;
+
       content = Stack(
         children: [
           Container(
-            height: 240,
             width: double.infinity,
             decoration: BoxDecoration(
               color: Colors.black,
-              borderRadius: BorderRadius.circular(24.0),
+              borderRadius: BorderRadius.circular(28.0),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.5),
+                  blurRadius: 15,
+                  offset: const Offset(0, 8),
+                ),
+              ],
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(24.0),
-              child: CameraPreview(controller),
+              borderRadius: BorderRadius.circular(28.0),
+              child: AspectRatio(
+                aspectRatio: aspectRatio,
+                child: CameraPreview(controller),
+              ),
             ),
           ),
           
           // LIVE Badge
           Positioned(
-            top: 16,
-            left: 16,
+            top: 20,
+            left: 20,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: Colors.redAccent.withOpacity(0.8),
-                borderRadius: BorderRadius.circular(8),
+                color: Colors.redAccent.withOpacity(0.85),
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.redAccent.withOpacity(0.3),
+                    blurRadius: 8,
+                    spreadRadius: 1,
+                  ),
+                ],
               ),
               child: Row(
                 children: [
                   Container(
-                    width: 6,
-                    height: 6,
+                    width: 8,
+                    height: 8,
                     decoration: const BoxDecoration(
                       color: Colors.white,
                       shape: BoxShape.circle,
                     ),
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 8),
                   const Text(
                     'LIVE',
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 10,
+                      fontSize: 11,
                       fontWeight: FontWeight.bold,
-                      letterSpacing: 1,
+                      letterSpacing: 1.2,
                     ),
                   ),
                 ],
@@ -108,43 +128,27 @@ class _CameraPreviewPlaceholderState extends State<CameraPreviewPlaceholder> wit
             ),
           ),
           
-          // Fullscreen Hint
+          // Fullscreen Hint (Bottom Right)
           Positioned(
-            bottom: 16,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.6),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.white.withOpacity(0.2)),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.fullscreen, color: Colors.white.withOpacity(0.8), size: 16),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Tap to enter fullscreen',
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.8),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
+            bottom: 20,
+            right: 20,
+            child: Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.6),
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white.withOpacity(0.2)),
               ),
+              child: const Icon(Icons.fullscreen, color: Colors.white, size: 24),
             ),
           ),
         ],
       );
     } else {
       content = GlassContainer(
-        height: 240,
+        height: 300, // Slightly taller default for placeholder
         width: double.infinity,
+        borderRadius: 28,
         gradientColors: [
           Colors.black.withOpacity(0.3),
           Colors.black.withOpacity(0.1),
@@ -155,14 +159,15 @@ class _CameraPreviewPlaceholderState extends State<CameraPreviewPlaceholder> wit
             children: [
               Icon(
                 Icons.camera_alt_outlined,
-                size: 48,
-                color: Colors.white.withOpacity(0.5),
+                size: 56,
+                color: Colors.white.withOpacity(0.4),
               ),
               const SizedBox(height: 16),
               Text(
                 'Initializing Camera...',
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      color: Colors.white.withOpacity(0.7),
+                      color: Colors.white.withOpacity(0.6),
+                      fontSize: 18,
                     ),
               ),
             ],
@@ -212,12 +217,12 @@ class _CameraPreviewPlaceholderState extends State<CameraPreviewPlaceholder> wit
           builder: (context, child) {
             return Container(
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(24.0),
+                borderRadius: BorderRadius.circular(28.0),
                 boxShadow: [
                   BoxShadow(
-                    color: Theme.of(context).colorScheme.primary.withOpacity(_glowAnimation.value),
-                    blurRadius: 20,
-                    spreadRadius: 1,
+                    color: Theme.of(context).colorScheme.primary.withOpacity(_glowAnimation.value * 0.5),
+                    blurRadius: 25,
+                    spreadRadius: 2,
                   ),
                 ],
               ),
