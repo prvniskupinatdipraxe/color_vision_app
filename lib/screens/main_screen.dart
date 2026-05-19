@@ -60,8 +60,8 @@ class _MainScreenState extends State<MainScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    _buildNavItem(Icons.auto_awesome_outlined, Icons.auto_awesome, 'Home', 0),
-                    _buildNavItem(Icons.visibility_outlined, Icons.visibility, 'Simulate', 1),
+                    _buildNavItem(Icons.auto_fix_normal_rounded, Icons.auto_fix_high_rounded, 'Assist', 0),
+                    _buildNavItem(Icons.visibility_off_outlined, Icons.visibility_off_rounded, 'Simulate', 1),
                     _buildNavItem(Icons.settings_outlined, Icons.settings, 'Settings', 2),
                     _buildNavItem(Icons.info_outline, Icons.info, 'About', 3),
                   ],

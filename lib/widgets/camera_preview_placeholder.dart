@@ -3,6 +3,7 @@ import 'package:camera/camera.dart';
 import 'glass_container.dart';
 import '../services/color_vision_simulator.dart';
 import '../screens/fullscreen_camera_screen.dart';
+import '../services/camera_manager.dart';
 
 class CameraPreviewPlaceholder extends StatefulWidget {
   final List<double>? matrix;
@@ -14,15 +15,14 @@ class CameraPreviewPlaceholder extends StatefulWidget {
 }
 
 class _CameraPreviewPlaceholderState extends State<CameraPreviewPlaceholder> with SingleTickerProviderStateMixin {
-  CameraController? _controller;
-  bool _isCameraInitialized = false;
   late AnimationController _glowController;
   late Animation<double> _glowAnimation;
+  bool _isCameraInitialized = false;
 
   @override
   void initState() {
     super.initState();
-    _initializeCamera();
+    _checkCamera();
     _glowController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 2),
@@ -32,43 +32,36 @@ class _CameraPreviewPlaceholderState extends State<CameraPreviewPlaceholder> wit
     );
   }
 
-  Future<void> _initializeCamera() async {
-    try {
-      final cameras = await availableCameras();
-      if (cameras.isNotEmpty) {
-        _controller = CameraController(
-          cameras.first,
-          ResolutionPreset.medium,
-          enableAudio: false,
-        );
-        await _controller!.initialize();
-        if (mounted) {
-          setState(() {
-            _isCameraInitialized = true;
-          });
-        }
-      }
-    } catch (e) {
-      debugPrint('Error initializing camera: \$e');
+  Future<void> _checkCamera() async {
+    final cameraManager = CameraManager();
+    if (!cameraManager.isInitialized) {
+      await cameraManager.initialize();
+    }
+    if (mounted) {
+      setState(() {
+        _isCameraInitialized = cameraManager.isInitialized;
+      });
     }
   }
 
   @override
   void dispose() {
     _glowController.dispose();
-    _controller?.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final cameraManager = CameraManager();
+    final controller = cameraManager.controller;
+    
     Widget content;
 
-    if (_isCameraInitialized && _controller != null) {
+    if (_isCameraInitialized && controller != null && controller.value.isInitialized) {
       content = Stack(
         children: [
           Container(
-            height: 240, // Smaller height on home screen
+            height: 240,
             width: double.infinity,
             decoration: BoxDecoration(
               color: Colors.black,
@@ -76,7 +69,7 @@ class _CameraPreviewPlaceholderState extends State<CameraPreviewPlaceholder> wit
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(24.0),
-              child: CameraPreview(_controller!),
+              child: CameraPreview(controller),
             ),
           ),
           
@@ -195,7 +188,7 @@ class _CameraPreviewPlaceholderState extends State<CameraPreviewPlaceholder> wit
       );
     }
 
-    if (_isCameraInitialized && _controller != null) {
+    if (_isCameraInitialized && controller != null) {
       return GestureDetector(
         onTap: () {
           Navigator.push(
@@ -206,7 +199,7 @@ class _CameraPreviewPlaceholderState extends State<CameraPreviewPlaceholder> wit
                 return FadeTransition(
                   opacity: animation,
                   child: FullscreenCameraScreen(
-                    controller: _controller!,
+                    controller: controller,
                     baseMatrix: widget.matrix,
                   ),
                 );
@@ -229,7 +222,7 @@ class _CameraPreviewPlaceholderState extends State<CameraPreviewPlaceholder> wit
                 ],
               ),
               child: Hero(
-                tag: 'camera_preview',
+                tag: 'camera_preview_\${widget.hashCode}',
                 child: content,
               ),
             );
