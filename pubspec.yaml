@@ -2,7 +2,7 @@ name: color_vision_app
 description: "A new Flutter project."
 publish_to: 'none'
 
-version: 1.1.0+2
+version: 1.2.0+3
 
 environment:
   sdk: ^3.11.5
@@ -17,6 +17,8 @@ dependencies:
   path_provider: ^2.1.5
   image_gallery_saver: ^2.0.3
   permission_handler: ^11.3.1
+  shared_preferences: ^2.3.5
+  provider: ^6.1.2
 
 dev_dependencies:
   flutter_test:

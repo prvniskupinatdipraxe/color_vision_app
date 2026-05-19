@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../widgets/glass_container.dart';
+import '../services/theme_provider.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -19,6 +21,11 @@ class SettingsScreen extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               
+              _buildSectionTitle(context, 'Appearance'),
+              const SizedBox(height: 16),
+              const ThemeSelector(),
+              
+              const SizedBox(height: 32),
               _buildSectionTitle(context, 'Accessibility'),
               const SizedBox(height: 16),
               const AccessibilitySettings(),
@@ -57,6 +64,101 @@ class SettingsScreen extends StatelessWidget {
   }
 }
 
+class ThemeSelector extends StatelessWidget {
+  const ThemeSelector({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    
+    return GlassContainer(
+      padding: const EdgeInsets.all(12),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          _ThemeOption(
+            mode: ThemeMode.light,
+            icon: Icons.light_mode_rounded,
+            label: 'Light',
+            isSelected: themeProvider.themeMode == ThemeMode.light,
+            onTap: () => themeProvider.setThemeMode(ThemeMode.light),
+          ),
+          _ThemeOption(
+            mode: ThemeMode.dark,
+            icon: Icons.dark_mode_rounded,
+            label: 'Dark',
+            isSelected: themeProvider.themeMode == ThemeMode.dark,
+            onTap: () => themeProvider.setThemeMode(ThemeMode.dark),
+          ),
+          _ThemeOption(
+            mode: ThemeMode.system,
+            icon: Icons.brightness_auto_rounded,
+            label: 'System',
+            isSelected: themeProvider.themeMode == ThemeMode.system,
+            onTap: () => themeProvider.setThemeMode(ThemeMode.system),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ThemeOption extends StatelessWidget {
+  final ThemeMode mode;
+  final IconData icon;
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _ThemeOption({
+    required this.mode,
+    required this.icon,
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            color: isSelected ? colorScheme.primary.withOpacity(0.15) : Colors.transparent,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isSelected ? colorScheme.primary.withOpacity(0.5) : Colors.transparent,
+              width: 1.5,
+            ),
+          ),
+          child: Column(
+            children: [
+              Icon(
+                icon,
+                color: isSelected ? colorScheme.primary : (Theme.of(context).brightness == Brightness.dark ? Colors.white54 : Colors.black45),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  color: isSelected ? colorScheme.primary : (Theme.of(context).brightness == Brightness.dark ? Colors.white54 : Colors.black45),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class AccessibilitySettings extends StatefulWidget {
   const AccessibilitySettings({super.key});
 
@@ -71,6 +173,8 @@ class _AccessibilitySettingsState extends State<AccessibilitySettings> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return GlassContainer(
       padding: const EdgeInsets.all(8),
       child: Column(
@@ -82,7 +186,7 @@ class _AccessibilitySettingsState extends State<AccessibilitySettings> {
             _highContrast,
             (val) => setState(() => _highContrast = val),
           ),
-          const Divider(color: Colors.white10, height: 1),
+          Divider(color: isDark ? Colors.white10 : Colors.black12, height: 1),
           _buildSwitchTile(
             'Large Text Mode',
             'Increase application font size',
@@ -90,7 +194,7 @@ class _AccessibilitySettingsState extends State<AccessibilitySettings> {
             _largeText,
             (val) => setState(() => _largeText = val),
           ),
-          const Divider(color: Colors.white10, height: 1),
+          Divider(color: isDark ? Colors.white10 : Colors.black12, height: 1),
           _buildSwitchTile(
             'Simplified UI',
             'Reduce clutter and animations',
@@ -104,10 +208,12 @@ class _AccessibilitySettingsState extends State<AccessibilitySettings> {
   }
 
   Widget _buildSwitchTile(String title, String subtitle, IconData icon, bool value, ValueChanged<bool> onChanged) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return SwitchListTile(
-      secondary: Icon(icon, color: Colors.white70),
+      secondary: Icon(icon, color: isDark ? Colors.white70 : Colors.black54),
       title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
-      subtitle: Text(subtitle, style: const TextStyle(color: Colors.white38, fontSize: 13)),
+      subtitle: Text(subtitle, style: TextStyle(color: isDark ? Colors.white38 : Colors.black38, fontSize: 13)),
       value: value,
       onChanged: onChanged,
       activeColor: Theme.of(context).colorScheme.primary,
