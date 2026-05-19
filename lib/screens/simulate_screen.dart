@@ -4,6 +4,8 @@ import '../widgets/camera_preview_placeholder.dart';
 import '../widgets/glass_container.dart';
 import '../services/color_vision_simulator.dart';
 
+enum DeficiencyType { protan, deutan, tritan }
+
 class SimulateScreen extends StatefulWidget {
   const SimulateScreen({super.key});
 
@@ -12,17 +14,8 @@ class SimulateScreen extends StatefulWidget {
 }
 
 class _SimulateScreenState extends State<SimulateScreen> {
-  double redValue = 0.5;
-  double greenValue = 0.5;
-  double blueValue = 0.5;
-
-  void _applyPreset(double value) {
-    setState(() {
-      redValue = value;
-      greenValue = value;
-      blueValue = value;
-    });
-  }
+  DeficiencyType _selectedType = DeficiencyType.protan;
+  double _intensity = 0.5;
 
   void _showInfoSheet(BuildContext context) {
     showModalBottomSheet(
@@ -69,10 +62,29 @@ class _SimulateScreenState extends State<SimulateScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Map single intensity to specific channel sensitivity
+    double red = 1.0;
+    double green = 1.0;
+    double blue = 1.0;
+    
+    final sensitivity = 1.0 - _intensity;
+    
+    switch (_selectedType) {
+      case DeficiencyType.protan:
+        red = sensitivity;
+        break;
+      case DeficiencyType.deutan:
+        green = sensitivity;
+        break;
+      case DeficiencyType.tritan:
+        blue = sensitivity;
+        break;
+    }
+
     final matrix = ColorVisionSimulator.calculateSimulationMatrix(
-      redSensitivity: redValue,
-      greenSensitivity: greenValue,
-      blueSensitivity: blueValue,
+      redSensitivity: red,
+      greenSensitivity: green,
+      blueSensitivity: blue,
     );
 
     return Scaffold(
@@ -101,55 +113,64 @@ class _SimulateScreenState extends State<SimulateScreen> {
               const SizedBox(height: 24),
               CameraPreviewPlaceholder(matrix: matrix),
               const SizedBox(height: 24),
+              
+              Text(
+                'Deficiency Type',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  _buildTypeCard(
+                    DeficiencyType.protan,
+                    'Protanopia',
+                    'Red-Blind',
+                    Icons.lens_blur_rounded,
+                  ),
+                  const SizedBox(width: 12),
+                  _buildTypeCard(
+                    DeficiencyType.deutan,
+                    'Deuteranopia',
+                    'Green-Blind',
+                    Icons.lens_blur_rounded,
+                  ),
+                  const SizedBox(width: 12),
+                  _buildTypeCard(
+                    DeficiencyType.tritan,
+                    'Tritanopia',
+                    'Blue-Blind',
+                    Icons.lens_blur_rounded,
+                  ),
+                ],
+              ),
+              
+              const SizedBox(height: 24),
               GlassContainer(
                 padding: const EdgeInsets.all(24),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Deficiency Intensity',
+                      'Intensity Control',
                       style: Theme.of(context).textTheme.headlineMedium,
                     ),
                     const SizedBox(height: 16),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        _buildPresetButton('Mild', 0.8),
-                        _buildPresetButton('Medium', 0.5),
-                        _buildPresetButton('Severe', 0.1),
-                        _buildPresetButton('None', 1.0, isReset: true),
+                        _buildIntensityPreset('Mild', 0.2),
+                        _buildIntensityPreset('Medium', 0.5),
+                        _buildIntensityPreset('Severe', 1.0),
                       ],
                     ),
                     const SizedBox(height: 32),
                     AnimatedColorSlider(
-                      label: 'Red Cones (Protan)',
-                      value: redValue,
-                      activeColor: Colors.redAccent,
+                      label: 'Simulation Strength',
+                      value: _intensity,
+                      activeColor: Theme.of(context).colorScheme.primary,
                       onChanged: (val) {
                         setState(() {
-                          redValue = val;
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 20),
-                    AnimatedColorSlider(
-                      label: 'Green Cones (Deutan)',
-                      value: greenValue,
-                      activeColor: Colors.greenAccent,
-                      onChanged: (val) {
-                        setState(() {
-                          greenValue = val;
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 20),
-                    AnimatedColorSlider(
-                      label: 'Blue Cones (Tritan)',
-                      value: blueValue,
-                      activeColor: Colors.blueAccent,
-                      onChanged: (val) {
-                        setState(() {
-                          blueValue = val;
+                          _intensity = val;
                         });
                       },
                     ),
@@ -164,24 +185,70 @@ class _SimulateScreenState extends State<SimulateScreen> {
     );
   }
 
-  Widget _buildPresetButton(String label, double value, {bool isReset = false}) {
+  Widget _buildTypeCard(DeficiencyType type, String title, String subtitle, IconData icon) {
+    final isSelected = _selectedType == type;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => _selectedType = type),
+        child: GlassContainer(
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+          gradientColors: isSelected
+              ? [
+                  Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                  Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                ]
+              : null,
+          child: Column(
+            children: [
+              Icon(
+                icon,
+                color: isSelected ? Theme.of(context).colorScheme.primary : Colors.white38,
+                size: 28,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: isSelected ? Colors.white : Colors.white54,
+                ),
+              ),
+              Text(
+                subtitle,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 9,
+                  color: Colors.white38,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildIntensityPreset(String label, double value) {
+    final isSelected = (_intensity - value).abs() < 0.05;
     return Expanded(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 4.0),
         child: ElevatedButton(
-          onPressed: () => _applyPreset(value),
+          onPressed: () => setState(() => _intensity = value),
           style: ElevatedButton.styleFrom(
-            backgroundColor: isReset 
-                ? Colors.greenAccent.withOpacity(0.1) 
+            backgroundColor: isSelected 
+                ? Theme.of(context).colorScheme.primary.withOpacity(0.2) 
                 : Colors.white.withOpacity(0.05),
-            foregroundColor: isReset ? Colors.greenAccent : Colors.white,
+            foregroundColor: isSelected ? Colors.white : Colors.white54,
             padding: const EdgeInsets.symmetric(vertical: 12),
             elevation: 0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
               side: BorderSide(
-                color: isReset 
-                    ? Colors.greenAccent.withOpacity(0.3) 
+                color: isSelected 
+                    ? Theme.of(context).colorScheme.primary.withOpacity(0.5) 
                     : Colors.white.withOpacity(0.1),
               ),
             ),
@@ -189,8 +256,6 @@ class _SimulateScreenState extends State<SimulateScreen> {
           child: Text(
             label,
             style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
           ),
         ),
       ),
