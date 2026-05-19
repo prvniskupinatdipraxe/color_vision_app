@@ -1,7 +1,9 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'home_screen.dart';
+import 'simulate_screen.dart';
 import 'settings_screen.dart';
+import 'about_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -15,7 +17,9 @@ class _MainScreenState extends State<MainScreen> {
 
   final List<Widget> _screens = [
     const HomeScreen(),
+    const SimulateScreen(),
     const SettingsScreen(),
+    const AboutScreen(),
   ];
 
   @override
@@ -28,7 +32,7 @@ class _MainScreenState extends State<MainScreen> {
       ),
       bottomNavigationBar: SafeArea(
         child: Container(
-          margin: const EdgeInsets.fromLTRB(40, 0, 40, 24),
+          margin: const EdgeInsets.fromLTRB(20, 0, 20, 24),
           height: 64,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(32),
@@ -56,8 +60,10 @@ class _MainScreenState extends State<MainScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    _buildNavItem(Icons.auto_awesome_outlined, Icons.auto_awesome, 'Assist', 0),
-                    _buildNavItem(Icons.settings_outlined, Icons.settings, 'Settings', 1),
+                    _buildNavItem(Icons.auto_awesome_outlined, Icons.auto_awesome, 'Home', 0),
+                    _buildNavItem(Icons.visibility_outlined, Icons.visibility, 'Simulate', 1),
+                    _buildNavItem(Icons.settings_outlined, Icons.settings, 'Settings', 2),
+                    _buildNavItem(Icons.info_outline, Icons.info, 'About', 3),
                   ],
                 ),
               ),
@@ -76,10 +82,10 @@ class _MainScreenState extends State<MainScreen> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 400),
         curve: Curves.easeOutExpo,
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           color: isSelected ? Theme.of(context).colorScheme.primary.withOpacity(0.15) : Colors.transparent,
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(20),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -90,14 +96,14 @@ class _MainScreenState extends State<MainScreen> {
               size: 24,
             ),
             if (isSelected) ...[
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               Text(
                 label,
-                style: TextStyle(
+                style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                  letterSpacing: 0.5,
+                  fontSize: 12,
+                  letterSpacing: 0.3,
                 ),
               ),
             ],
