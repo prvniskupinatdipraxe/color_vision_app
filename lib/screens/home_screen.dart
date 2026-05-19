@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../widgets/animated_color_slider.dart';
 import '../widgets/camera_preview_placeholder.dart';
 import '../widgets/glass_container.dart';
 import '../services/color_vision_simulator.dart';
+import '../services/theme_provider.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -25,6 +27,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showInfoSheet(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -47,7 +52,9 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 16),
             Text(
               'Assist mode enhances difficult colors in real time to improve visibility for users with color vision deficiencies.',
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.white70),
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                color: isDark ? Colors.white70 : Colors.black87,
+              ),
             ),
             const SizedBox(height: 24),
             SizedBox(
@@ -56,7 +63,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 onPressed: () => Navigator.pop(context),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
-                  foregroundColor: Colors.white,
+                  foregroundColor: isDark ? Colors.white : Colors.black87,
+                  elevation: 0,
                 ),
                 child: const Text('Got it'),
               ),
@@ -69,6 +77,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     final matrix = ColorVisionSimulator.calculateCorrectionMatrix(
       redSensitivity: redValue,
       greenSensitivity: greenValue,
@@ -92,7 +103,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(width: 8),
                   IconButton(
                     onPressed: () => _showInfoSheet(context),
-                    icon: const Icon(Icons.info_outline, color: Colors.white54, size: 24),
+                    icon: Icon(
+                      Icons.info_outline, 
+                      color: isDark ? Colors.white54 : Colors.black45, 
+                      size: 24
+                    ),
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
                   ),
@@ -110,16 +125,18 @@ class _HomeScreenState extends State<HomeScreen> {
                       'Sensitivity Adjustments',
                       style: Theme.of(context).textTheme.headlineMedium,
                     ),
-                    const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        _buildPresetButton('Mild', 0.8),
-                        _buildPresetButton('Medium', 0.5),
-                        _buildPresetButton('Strong', 0.1),
-                        _buildPresetButton('Reset', 1.0, isReset: true),
-                      ],
-                    ),
+                    if (!themeProvider.isSimplifiedUI) ...[
+                      const SizedBox(height: 16),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          _buildPresetButton(context, 'Mild', 0.8),
+                          _buildPresetButton(context, 'Medium', 0.5),
+                          _buildPresetButton(context, 'Strong', 0.1),
+                          _buildPresetButton(context, 'Reset', 1.0, isReset: true),
+                        ],
+                      ),
+                    ],
                     const SizedBox(height: 32),
                     AnimatedColorSlider(
                       label: 'Red Sensitivity (Protan)',
@@ -164,7 +181,11 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildPresetButton(String label, double value, {bool isReset = false}) {
+  Widget _buildPresetButton(BuildContext context, String label, double value, {bool isReset = false}) {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isHighContrast = themeProvider.isHighContrast;
+    
     return Expanded(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 4.0),
@@ -172,23 +193,29 @@ class _HomeScreenState extends State<HomeScreen> {
           onPressed: () => _applyPreset(value),
           style: ElevatedButton.styleFrom(
             backgroundColor: isReset 
-                ? Colors.redAccent.withOpacity(0.1) 
-                : Colors.white.withOpacity(0.05),
-            foregroundColor: isReset ? Colors.redAccent : Colors.white,
+                ? (isHighContrast ? Colors.red.withOpacity(0.2) : Colors.redAccent.withOpacity(0.1))
+                : (isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.05)),
+            foregroundColor: isReset 
+                ? (isDark && isHighContrast ? Colors.white : Colors.redAccent) 
+                : (isDark ? Colors.white : Colors.black87),
             padding: const EdgeInsets.symmetric(vertical: 12),
             elevation: 0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
               side: BorderSide(
                 color: isReset 
-                    ? Colors.redAccent.withOpacity(0.3) 
-                    : Colors.white.withOpacity(0.1),
+                    ? (isHighContrast ? Colors.red : Colors.redAccent.withOpacity(0.3)) 
+                    : (isHighContrast ? (isDark ? Colors.white38 : Colors.black38) : (isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.1))),
+                width: isHighContrast ? 2.0 : 1.0,
               ),
             ),
           ),
           child: Text(
             label,
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 12, 
+              fontWeight: isHighContrast ? FontWeight.bold : FontWeight.bold
+            ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),

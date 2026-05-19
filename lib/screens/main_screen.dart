@@ -1,9 +1,11 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'home_screen.dart';
 import 'simulate_screen.dart';
 import 'settings_screen.dart';
 import 'about_screen.dart';
+import '../services/theme_provider.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -24,6 +26,15 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colorScheme = Theme.of(context).colorScheme;
+
+    // Accessibility adjustments
+    final double blurSigma = themeProvider.isSimplifiedUI ? 0.0 : 15.0;
+    final double opacityMultiplier = themeProvider.isHighContrast ? 2.0 : 1.0;
+    final double borderWidth = themeProvider.isHighContrast ? 2.0 : 1.0;
+
     return Scaffold(
       extendBody: true,
       body: IndexedStack(
@@ -36,9 +47,9 @@ class _MainScreenState extends State<MainScreen> {
           height: 64,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(32),
-            boxShadow: [
+            boxShadow: themeProvider.isSimplifiedUI ? null : [
               BoxShadow(
-                color: Colors.black.withOpacity(0.3),
+                color: Colors.black.withOpacity(isDark ? 0.3 : 0.1),
                 blurRadius: 20,
                 offset: const Offset(0, 10),
               ),
@@ -47,14 +58,18 @@ class _MainScreenState extends State<MainScreen> {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(32),
             child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+              filter: ImageFilter.blur(sigmaX: blurSigma, sigmaY: blurSigma),
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.08),
+                  color: themeProvider.isSimplifiedUI 
+                      ? (isDark ? Colors.black : Colors.white)
+                      : (isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.05)),
                   borderRadius: BorderRadius.circular(32),
                   border: Border.all(
-                    color: Colors.white.withOpacity(0.1),
-                    width: 1,
+                    color: (isDark ? Colors.white : Colors.black).withOpacity(
+                      (isDark ? 0.1 : 0.05) * opacityMultiplier
+                    ),
+                    width: borderWidth,
                   ),
                 ),
                 child: Row(
@@ -75,33 +90,40 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   Widget _buildNavItem(IconData outlineIcon, IconData filledIcon, String label, int index) {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
     final isSelected = _currentIndex == index;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colorScheme = Theme.of(context).colorScheme;
+
     return GestureDetector(
       onTap: () => setState(() => _currentIndex = index),
       behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 400),
+        duration: themeProvider.isSimplifiedUI ? Duration.zero : const Duration(milliseconds: 400),
         curve: Curves.easeOutExpo,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? Theme.of(context).colorScheme.primary.withOpacity(0.15) : Colors.transparent,
+          color: isSelected ? colorScheme.primary.withOpacity(0.15) : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
+          border: isSelected && themeProvider.isHighContrast 
+              ? Border.all(color: colorScheme.primary, width: 2)
+              : null,
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               isSelected ? filledIcon : outlineIcon,
-              color: isSelected ? Theme.of(context).colorScheme.primary : Colors.white60,
+              color: isSelected ? colorScheme.primary : (isDark ? Colors.white60 : Colors.black45),
               size: 24,
             ),
             if (isSelected) ...[
               const SizedBox(width: 6),
               Text(
                 label,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
+                style: TextStyle(
+                  color: isDark ? Colors.white : Colors.black87,
+                  fontWeight: FontWeight.bold,
                   fontSize: 12,
                   letterSpacing: 0.3,
                 ),

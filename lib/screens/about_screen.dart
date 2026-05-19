@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import '../widgets/glass_container.dart';
+import 'terms_screen.dart';
+import 'privacy_screen.dart';
 
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
@@ -45,9 +49,9 @@ class AboutScreen extends StatelessWidget {
                       style: Theme.of(context).textTheme.headlineMedium,
                     ),
                     const SizedBox(height: 8),
-                    const Text(
-                      'Version 1.0.0',
-                      style: TextStyle(color: Colors.white54),
+                    Text(
+                      'Version 1.3.0',
+                      style: TextStyle(color: isDark ? Colors.white54 : Colors.black45),
                     ),
                     const SizedBox(height: 24),
                     Text(
@@ -55,6 +59,7 @@ class AboutScreen extends StatelessWidget {
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             height: 1.5,
+                            color: isDark ? Colors.white70 : Colors.black87,
                           ),
                     ),
                   ],
@@ -66,19 +71,35 @@ class AboutScreen extends StatelessWidget {
                 child: Column(
                   children: [
                     ListTile(
-                      leading: const Icon(Icons.policy_outlined),
+                      leading: Icon(Icons.policy_outlined, color: isDark ? Colors.white70 : Colors.black54),
                       title: const Text('Privacy Policy'),
-                      trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                      onTap: () {},
+                      trailing: Icon(Icons.arrow_forward_ios, size: 16, color: isDark ? Colors.white38 : Colors.black38),
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const PrivacyScreen()),
+                      ),
                     ),
-                    const Divider(color: Colors.white24),
+                    Divider(color: isDark ? Colors.white24 : Colors.black12),
                     ListTile(
-                      leading: const Icon(Icons.description_outlined),
+                      leading: Icon(Icons.description_outlined, color: isDark ? Colors.white70 : Colors.black54),
                       title: const Text('Terms of Service'),
-                      trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                      onTap: () {},
+                      trailing: Icon(Icons.arrow_forward_ios, size: 16, color: isDark ? Colors.white38 : Colors.black38),
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const TermsScreen()),
+                      ),
                     ),
                   ],
+                ),
+              ),
+              const SizedBox(height: 40),
+              Center(
+                child: Text(
+                  '© 2024 Vision Assist Pro. All rights reserved.',
+                  style: TextStyle(
+                    color: isDark ? Colors.white24 : Colors.black26,
+                    fontSize: 12,
+                  ),
                 ),
               ),
             ],

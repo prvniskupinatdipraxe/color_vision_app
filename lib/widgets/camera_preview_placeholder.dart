@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
+import 'package:provider/provider.dart';
 import 'glass_container.dart';
 import '../services/color_vision_simulator.dart';
 import '../screens/fullscreen_camera_screen.dart';
 import '../services/camera_manager.dart';
+import '../services/theme_provider.dart';
 
 class CameraPreviewPlaceholder extends StatefulWidget {
   final List<double>? matrix;
@@ -54,12 +56,12 @@ class _CameraPreviewPlaceholderState extends State<CameraPreviewPlaceholder> wit
   Widget build(BuildContext context) {
     final cameraManager = CameraManager();
     final controller = cameraManager.controller;
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     
     Widget content;
 
     if (_isCameraInitialized && controller != null && controller.value.isInitialized) {
-      // Calculate aspect ratio - use native if possible, otherwise default to 3:4
-      // CameraController.value.aspectRatio is usually > 1 (landscape), so we invert it for portrait
       final double aspectRatio = 1 / controller.value.aspectRatio;
 
       content = Stack(
@@ -69,7 +71,7 @@ class _CameraPreviewPlaceholderState extends State<CameraPreviewPlaceholder> wit
             decoration: BoxDecoration(
               color: Colors.black,
               borderRadius: BorderRadius.circular(28.0),
-              boxShadow: [
+              boxShadow: themeProvider.isSimplifiedUI ? null : [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.5),
                   blurRadius: 15,
@@ -86,7 +88,6 @@ class _CameraPreviewPlaceholderState extends State<CameraPreviewPlaceholder> wit
             ),
           ),
           
-          // LIVE Badge
           Positioned(
             top: 20,
             left: 20,
@@ -95,7 +96,7 @@ class _CameraPreviewPlaceholderState extends State<CameraPreviewPlaceholder> wit
               decoration: BoxDecoration(
                 color: Colors.redAccent.withOpacity(0.85),
                 borderRadius: BorderRadius.circular(10),
-                boxShadow: [
+                boxShadow: themeProvider.isSimplifiedUI ? null : [
                   BoxShadow(
                     color: Colors.redAccent.withOpacity(0.3),
                     blurRadius: 8,
@@ -128,7 +129,6 @@ class _CameraPreviewPlaceholderState extends State<CameraPreviewPlaceholder> wit
             ),
           ),
           
-          // Fullscreen Hint (Bottom Right)
           Positioned(
             bottom: 20,
             right: 20,
@@ -146,12 +146,15 @@ class _CameraPreviewPlaceholderState extends State<CameraPreviewPlaceholder> wit
       );
     } else {
       content = GlassContainer(
-        height: 300, // Slightly taller default for placeholder
+        height: 300,
         width: double.infinity,
         borderRadius: 28,
-        gradientColors: [
-          Colors.black.withOpacity(0.3),
-          Colors.black.withOpacity(0.1),
+        gradientColors: themeProvider.isSimplifiedUI ? [
+          isDark ? Colors.black : Colors.grey.shade200,
+          isDark ? Colors.black : Colors.grey.shade200,
+        ] : [
+          isDark ? Colors.black.withOpacity(0.3) : Colors.black.withOpacity(0.05),
+          isDark ? Colors.black.withOpacity(0.1) : Colors.black.withOpacity(0.02),
         ],
         child: Center(
           child: Column(
@@ -160,13 +163,13 @@ class _CameraPreviewPlaceholderState extends State<CameraPreviewPlaceholder> wit
               Icon(
                 Icons.camera_alt_outlined,
                 size: 56,
-                color: Colors.white.withOpacity(0.4),
+                color: isDark ? Colors.white.withOpacity(0.4) : Colors.black.withOpacity(0.3),
               ),
               const SizedBox(height: 16),
               Text(
                 'Initializing Camera...',
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      color: Colors.white.withOpacity(0.6),
+                      color: isDark ? Colors.white.withOpacity(0.6) : Colors.black.withOpacity(0.5),
                       fontSize: 18,
                     ),
               ),
@@ -182,7 +185,7 @@ class _CameraPreviewPlaceholderState extends State<CameraPreviewPlaceholder> wit
           begin: ColorVisionSimulator.identity,
           end: widget.matrix!,
         ),
-        duration: const Duration(milliseconds: 300),
+        duration: themeProvider.isSimplifiedUI ? Duration.zero : const Duration(milliseconds: 300),
         builder: (context, currentMatrix, child) {
           return ColorFiltered(
             colorFilter: ColorFilter.matrix(currentMatrix),
@@ -199,7 +202,7 @@ class _CameraPreviewPlaceholderState extends State<CameraPreviewPlaceholder> wit
           Navigator.push(
             context,
             PageRouteBuilder(
-              transitionDuration: const Duration(milliseconds: 400),
+              transitionDuration: themeProvider.isSimplifiedUI ? Duration.zero : const Duration(milliseconds: 400),
               pageBuilder: (context, animation, secondaryAnimation) {
                 return FadeTransition(
                   opacity: animation,
@@ -218,7 +221,7 @@ class _CameraPreviewPlaceholderState extends State<CameraPreviewPlaceholder> wit
             return Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(28.0),
-                boxShadow: [
+                boxShadow: themeProvider.isSimplifiedUI ? null : [
                   BoxShadow(
                     color: Theme.of(context).colorScheme.primary.withOpacity(_glowAnimation.value * 0.5),
                     blurRadius: 25,
@@ -227,7 +230,7 @@ class _CameraPreviewPlaceholderState extends State<CameraPreviewPlaceholder> wit
                 ],
               ),
               child: Hero(
-                tag: 'camera_preview_\${widget.hashCode}',
+                tag: 'camera_preview_${widget.hashCode}',
                 child: content,
               ),
             );

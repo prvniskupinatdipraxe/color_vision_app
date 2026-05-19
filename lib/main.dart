@@ -21,10 +21,23 @@ class ColorVisionApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
     
+    // Determine if we should use dark theme based on ThemeMode and system brightness
+    final bool isDarkMode = themeProvider.themeMode == ThemeMode.dark || 
+        (themeProvider.themeMode == ThemeMode.system && 
+         MediaQuery.platformBrightnessOf(context) == Brightness.dark);
+
     return MaterialApp(
       title: 'Vision Assist Pro',
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
+      theme: AppTheme.getTheme(
+        isDark: false,
+        isHighContrast: themeProvider.isHighContrast,
+        isLargeText: themeProvider.isLargeText,
+      ),
+      darkTheme: AppTheme.getTheme(
+        isDark: true,
+        isHighContrast: themeProvider.isHighContrast,
+        isLargeText: themeProvider.isLargeText,
+      ),
       themeMode: themeProvider.themeMode,
       debugShowCheckedModeBanner: false,
       home: const MainScreen(),

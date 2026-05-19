@@ -4,7 +4,7 @@ import '../services/color_vision_simulator.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:image_gallery_saver/image_gallery_saver.dart';
+import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
 import 'package:flutter/services.dart';
 
 class FullscreenCameraScreen extends StatefulWidget {
@@ -87,7 +87,7 @@ class _FullscreenCameraScreenState extends State<FullscreenCameraScreen> {
         file = await widget.controller.takePicture();
       }
 
-      final result = await ImageGallerySaver.saveFile(file.path);
+      final result = await ImageGallerySaverPlus.saveFile(file.path);
       
       if (mounted) {
         final bool isSuccess = result != null && result['isSuccess'] == true;

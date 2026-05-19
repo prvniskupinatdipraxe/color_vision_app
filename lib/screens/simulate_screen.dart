@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../widgets/animated_color_slider.dart';
 import '../widgets/camera_preview_placeholder.dart';
 import '../widgets/glass_container.dart';
 import '../services/color_vision_simulator.dart';
+import '../services/theme_provider.dart';
 
 enum DeficiencyType { protan, deutan, tritan }
 
@@ -18,6 +20,9 @@ class _SimulateScreenState extends State<SimulateScreen> {
   double _intensity = 0.5;
 
   void _showInfoSheet(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -40,7 +45,9 @@ class _SimulateScreenState extends State<SimulateScreen> {
             const SizedBox(height: 16),
             Text(
               'Simulate mode recreates how different color blindness types affect real-world vision.',
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.white70),
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                color: isDark ? Colors.white70 : Colors.black87,
+              ),
             ),
             const SizedBox(height: 24),
             SizedBox(
@@ -49,7 +56,8 @@ class _SimulateScreenState extends State<SimulateScreen> {
                 onPressed: () => Navigator.pop(context),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
-                  foregroundColor: Colors.white,
+                  foregroundColor: isDark ? Colors.white : Colors.black87,
+                  elevation: 0,
                 ),
                 child: const Text('Got it'),
               ),
@@ -62,6 +70,9 @@ class _SimulateScreenState extends State<SimulateScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     // Map single intensity to specific channel sensitivity
     double red = 1.0;
     double green = 1.0;
@@ -104,7 +115,11 @@ class _SimulateScreenState extends State<SimulateScreen> {
                   const SizedBox(width: 8),
                   IconButton(
                     onPressed: () => _showInfoSheet(context),
-                    icon: const Icon(Icons.info_outline, color: Colors.white54, size: 24),
+                    icon: Icon(
+                      Icons.info_outline, 
+                      color: isDark ? Colors.white54 : Colors.black45, 
+                      size: 24
+                    ),
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
                   ),
@@ -122,6 +137,7 @@ class _SimulateScreenState extends State<SimulateScreen> {
               Row(
                 children: [
                   _buildTypeCard(
+                    context,
                     DeficiencyType.protan,
                     'Protanopia',
                     'Red-Blind',
@@ -129,6 +145,7 @@ class _SimulateScreenState extends State<SimulateScreen> {
                   ),
                   const SizedBox(width: 12),
                   _buildTypeCard(
+                    context,
                     DeficiencyType.deutan,
                     'Deuteranopia',
                     'Green-Blind',
@@ -136,6 +153,7 @@ class _SimulateScreenState extends State<SimulateScreen> {
                   ),
                   const SizedBox(width: 12),
                   _buildTypeCard(
+                    context,
                     DeficiencyType.tritan,
                     'Tritanopia',
                     'Blue-Blind',
@@ -154,15 +172,17 @@ class _SimulateScreenState extends State<SimulateScreen> {
                       'Intensity Control',
                       style: Theme.of(context).textTheme.headlineMedium,
                     ),
-                    const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        _buildIntensityPreset('Mild', 0.2),
-                        _buildIntensityPreset('Medium', 0.5),
-                        _buildIntensityPreset('Severe', 1.0),
-                      ],
-                    ),
+                    if (!themeProvider.isSimplifiedUI) ...[
+                      const SizedBox(height: 16),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          _buildIntensityPreset(context, 'Mild', 0.2),
+                          _buildIntensityPreset(context, 'Medium', 0.5),
+                          _buildIntensityPreset(context, 'Severe', 1.0),
+                        ],
+                      ),
+                    ],
                     const SizedBox(height: 32),
                     AnimatedColorSlider(
                       label: 'Simulation Strength',
@@ -185,14 +205,17 @@ class _SimulateScreenState extends State<SimulateScreen> {
     );
   }
 
-  Widget _buildTypeCard(DeficiencyType type, String title, String subtitle, IconData icon) {
+  Widget _buildTypeCard(BuildContext context, DeficiencyType type, String title, String subtitle, IconData icon) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
     final isSelected = _selectedType == type;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Expanded(
       child: GestureDetector(
         onTap: () => setState(() => _selectedType = type),
         child: GlassContainer(
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
-          gradientColors: isSelected
+          gradientColors: isSelected && !themeProvider.isSimplifiedUI
               ? [
                   Theme.of(context).colorScheme.primary.withOpacity(0.3),
                   Theme.of(context).colorScheme.primary.withOpacity(0.1),
@@ -202,7 +225,7 @@ class _SimulateScreenState extends State<SimulateScreen> {
             children: [
               Icon(
                 icon,
-                color: isSelected ? Theme.of(context).colorScheme.primary : Colors.white38,
+                color: isSelected ? Theme.of(context).colorScheme.primary : (isDark ? Colors.white38 : Colors.black26),
                 size: 28,
               ),
               const SizedBox(height: 8),
@@ -212,17 +235,18 @@ class _SimulateScreenState extends State<SimulateScreen> {
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.bold,
-                  color: isSelected ? Colors.white : Colors.white54,
+                  color: isSelected ? (isDark ? Colors.white : Colors.black87) : (isDark ? Colors.white54 : Colors.black54),
                 ),
               ),
-              Text(
-                subtitle,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 9,
-                  color: Colors.white38,
+              if (!themeProvider.isSimplifiedUI)
+                Text(
+                  subtitle,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 9,
+                    color: isDark ? Colors.white38 : Colors.black38,
+                  ),
                 ),
-              ),
             ],
           ),
         ),
@@ -230,8 +254,10 @@ class _SimulateScreenState extends State<SimulateScreen> {
     );
   }
 
-  Widget _buildIntensityPreset(String label, double value) {
+  Widget _buildIntensityPreset(BuildContext context, String label, double value) {
     final isSelected = (_intensity - value).abs() < 0.05;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Expanded(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 4.0),
@@ -240,8 +266,8 @@ class _SimulateScreenState extends State<SimulateScreen> {
           style: ElevatedButton.styleFrom(
             backgroundColor: isSelected 
                 ? Theme.of(context).colorScheme.primary.withOpacity(0.2) 
-                : Colors.white.withOpacity(0.05),
-            foregroundColor: isSelected ? Colors.white : Colors.white54,
+                : (isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.05)),
+            foregroundColor: isSelected ? (isDark ? Colors.white : Colors.black87) : (isDark ? Colors.white54 : Colors.black54),
             padding: const EdgeInsets.symmetric(vertical: 12),
             elevation: 0,
             shape: RoundedRectangleBorder(
@@ -249,7 +275,7 @@ class _SimulateScreenState extends State<SimulateScreen> {
               side: BorderSide(
                 color: isSelected 
                     ? Theme.of(context).colorScheme.primary.withOpacity(0.5) 
-                    : Colors.white.withOpacity(0.1),
+                    : (isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.1)),
               ),
             ),
           ),

@@ -2,12 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../widgets/glass_container.dart';
 import '../services/theme_provider.dart';
+import 'terms_screen.dart';
+import 'privacy_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
@@ -31,6 +36,36 @@ class SettingsScreen extends StatelessWidget {
               const AccessibilitySettings(),
               
               const SizedBox(height: 32),
+              _buildSectionTitle(context, 'Legal & Info'),
+              const SizedBox(height: 16),
+              GlassContainer(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Column(
+                  children: [
+                    _buildListTile(
+                      context,
+                      'Terms of Service',
+                      Icons.description_outlined,
+                      () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const TermsScreen()),
+                      ),
+                    ),
+                    Divider(color: isDark ? Colors.white10 : Colors.black12, height: 1),
+                    _buildListTile(
+                      context,
+                      'Privacy Policy',
+                      Icons.privacy_tip_outlined,
+                      () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const PrivacyScreen()),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 32),
               _buildSectionTitle(context, 'System'),
               const SizedBox(height: 16),
               GlassContainer(
@@ -39,7 +74,10 @@ class SettingsScreen extends StatelessWidget {
                   leading: const Icon(Icons.restart_alt, color: Colors.redAccent),
                   title: const Text('Reset to Defaults', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.w600)),
                   onTap: () {
-                    // Reset logic would go here
+                    themeProvider.resetToDefaults();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Settings reset to defaults')),
+                    );
                   },
                 ),
               ),
@@ -60,6 +98,16 @@ class SettingsScreen extends StatelessWidget {
         fontSize: 12,
         letterSpacing: 1.2,
       ),
+    );
+  }
+
+  Widget _buildListTile(BuildContext context, String title, IconData icon, VoidCallback onTap) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return ListTile(
+      leading: Icon(icon, color: isDark ? Colors.white70 : Colors.black54),
+      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w500)),
+      trailing: Icon(Icons.chevron_right, color: isDark ? Colors.white24 : Colors.black26),
+      onTap: onTap,
     );
   }
 }
@@ -121,6 +169,7 @@ class _ThemeOption extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     
     return Expanded(
       child: GestureDetector(
@@ -140,7 +189,7 @@ class _ThemeOption extends StatelessWidget {
             children: [
               Icon(
                 icon,
-                color: isSelected ? colorScheme.primary : (Theme.of(context).brightness == Brightness.dark ? Colors.white54 : Colors.black45),
+                color: isSelected ? colorScheme.primary : (isDark ? Colors.white54 : Colors.black45),
               ),
               const SizedBox(height: 4),
               Text(
@@ -148,7 +197,7 @@ class _ThemeOption extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                  color: isSelected ? colorScheme.primary : (Theme.of(context).brightness == Brightness.dark ? Colors.white54 : Colors.black45),
+                  color: isSelected ? colorScheme.primary : (isDark ? Colors.white54 : Colors.black45),
                 ),
               ),
             ],
@@ -159,20 +208,12 @@ class _ThemeOption extends StatelessWidget {
   }
 }
 
-class AccessibilitySettings extends StatefulWidget {
+class AccessibilitySettings extends StatelessWidget {
   const AccessibilitySettings({super.key});
 
   @override
-  State<AccessibilitySettings> createState() => _AccessibilitySettingsState();
-}
-
-class _AccessibilitySettingsState extends State<AccessibilitySettings> {
-  bool _highContrast = false;
-  bool _largeText = false;
-  bool _simplifiedUI = false;
-
-  @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     
     return GlassContainer(
@@ -180,40 +221,44 @@ class _AccessibilitySettingsState extends State<AccessibilitySettings> {
       child: Column(
         children: [
           _buildSwitchTile(
+            context,
             'High Contrast Mode',
             'Increase global UI contrast',
             Icons.contrast,
-            _highContrast,
-            (val) => setState(() => _highContrast = val),
+            themeProvider.isHighContrast,
+            (val) => themeProvider.setHighContrast(val),
           ),
           Divider(color: isDark ? Colors.white10 : Colors.black12, height: 1),
           _buildSwitchTile(
+            context,
             'Large Text Mode',
             'Increase application font size',
             Icons.format_size,
-            _largeText,
-            (val) => setState(() => _largeText = val),
+            themeProvider.isLargeText,
+            (val) => themeProvider.setLargeText(val),
           ),
           Divider(color: isDark ? Colors.white10 : Colors.black12, height: 1),
           _buildSwitchTile(
+            context,
             'Simplified UI',
             'Reduce clutter and animations',
             Icons.dashboard_customize,
-            _simplifiedUI,
-            (val) => setState(() => _simplifiedUI = val),
+            themeProvider.isSimplifiedUI,
+            (val) => themeProvider.setSimplifiedUI(val),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildSwitchTile(String title, String subtitle, IconData icon, bool value, ValueChanged<bool> onChanged) {
+  Widget _buildSwitchTile(BuildContext context, String title, String subtitle, IconData icon, bool value, ValueChanged<bool> onChanged) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
     
     return SwitchListTile(
       secondary: Icon(icon, color: isDark ? Colors.white70 : Colors.black54),
       title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
-      subtitle: Text(subtitle, style: TextStyle(color: isDark ? Colors.white38 : Colors.black38, fontSize: 13)),
+      subtitle: themeProvider.isSimplifiedUI ? null : Text(subtitle, style: TextStyle(color: isDark ? Colors.white38 : Colors.black38, fontSize: 13)),
       value: value,
       onChanged: onChanged,
       activeColor: Theme.of(context).colorScheme.primary,
