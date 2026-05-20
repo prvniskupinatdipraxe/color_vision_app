@@ -3,9 +3,14 @@ import 'package:provider/provider.dart';
 import 'screens/main_screen.dart';
 import 'theme/app_theme.dart';
 import 'services/theme_provider.dart';
+import 'services/camera_manager.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Preload camera asynchronously in the background
+  CameraManager().initialize();
+
   runApp(
     ChangeNotifierProvider(
       create: (_) => ThemeProvider(),

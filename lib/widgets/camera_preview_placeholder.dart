@@ -25,6 +25,7 @@ class _CameraPreviewPlaceholderState extends State<CameraPreviewPlaceholder> wit
   @override
   void initState() {
     super.initState();
+    _isCameraInitialized = CameraManager().isInitialized;
     _checkCamera();
     _glowController = AnimationController(
       vsync: this,
@@ -40,7 +41,7 @@ class _CameraPreviewPlaceholderState extends State<CameraPreviewPlaceholder> wit
     if (!cameraManager.isInitialized) {
       await cameraManager.initialize();
     }
-    if (mounted) {
+    if (mounted && _isCameraInitialized != cameraManager.isInitialized) {
       setState(() {
         _isCameraInitialized = cameraManager.isInitialized;
       });
@@ -60,12 +61,14 @@ class _CameraPreviewPlaceholderState extends State<CameraPreviewPlaceholder> wit
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     
+    Widget cameraContent;
     Widget content;
 
     if (_isCameraInitialized && controller != null && controller.value.isInitialized) {
       final double aspectRatio = 1 / controller.value.aspectRatio;
 
-      content = Stack(
+      cameraContent = Stack(
+        key: const ValueKey('camera_preview'),
         children: [
           Container(
             width: double.infinity,
@@ -146,39 +149,50 @@ class _CameraPreviewPlaceholderState extends State<CameraPreviewPlaceholder> wit
         ],
       );
     } else {
-      content = GlassContainer(
-        height: 300,
-        width: double.infinity,
-        borderRadius: 28,
-        gradientColors: themeProvider.isSimplifiedUI ? [
-          isDark ? Colors.black : Colors.grey.shade200,
-          isDark ? Colors.black : Colors.grey.shade200,
-        ] : [
-          isDark ? Colors.black.withOpacity(0.3) : Colors.black.withOpacity(0.05),
-          isDark ? Colors.black.withOpacity(0.1) : Colors.black.withOpacity(0.02),
-        ],
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.camera_alt_outlined,
-                size: 56,
-                color: isDark ? Colors.white.withOpacity(0.4) : Colors.black.withOpacity(0.3),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Initializing Camera...',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      color: isDark ? Colors.white.withOpacity(0.6) : Colors.black.withOpacity(0.5),
-                      fontSize: 18,
-                    ),
-              ),
-            ],
+      // Use a standard portrait aspect ratio for the placeholder (3:4) to avoid layout jumps
+      cameraContent = AspectRatio(
+        key: const ValueKey('camera_placeholder'),
+        aspectRatio: 3 / 4,
+        child: GlassContainer(
+          width: double.infinity,
+          borderRadius: 28,
+          gradientColors: themeProvider.isSimplifiedUI ? [
+            isDark ? Colors.black : Colors.grey.shade200,
+            isDark ? Colors.black : Colors.grey.shade200,
+          ] : [
+            isDark ? Colors.black.withOpacity(0.3) : Colors.black.withOpacity(0.05),
+            isDark ? Colors.black.withOpacity(0.1) : Colors.black.withOpacity(0.02),
+          ],
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.camera_alt_outlined,
+                  size: 56,
+                  color: isDark ? Colors.white.withOpacity(0.4) : Colors.black.withOpacity(0.3),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Initializing Camera...',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        color: isDark ? Colors.white.withOpacity(0.6) : Colors.black.withOpacity(0.5),
+                        fontSize: 18,
+                      ),
+                ),
+              ],
+            ),
           ),
         ),
       );
     }
+
+    content = AnimatedSwitcher(
+      duration: const Duration(milliseconds: 600),
+      switchInCurve: Curves.easeOutCubic,
+      switchOutCurve: Curves.easeInCubic,
+      child: cameraContent,
+    );
 
     if (widget.matrix != null) {
       content = TweenAnimationBuilder<List<double>>(
