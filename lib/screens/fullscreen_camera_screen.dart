@@ -29,6 +29,29 @@ class _FullscreenCameraScreenState extends State<FullscreenCameraScreen> {
   File? _importedImage;
   bool _isCapturing = false;
 
+  double _currentZoomLevel = 1.0;
+  double _baseZoomLevel = 1.0;
+  double _minAvailableZoom = 1.0;
+  double _maxAvailableZoom = 1.0;
+  bool _isZooming = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _initZoomLevels();
+  }
+
+  Future<void> _initZoomLevels() async {
+    try {
+      _minAvailableZoom = await widget.controller.getMinZoomLevel();
+      _maxAvailableZoom = await widget.controller.getMaxZoomLevel();
+      if (_maxAvailableZoom > 8.0) _maxAvailableZoom = 8.0; // clamp realistic max zoom
+      _currentZoomLevel = _minAvailableZoom;
+    } catch (e) {
+      debugPrint('Error getting zoom levels: $e');
+    }
+  }
+
   @override
   void dispose() {
     if (_isFrozen) {
@@ -199,6 +222,31 @@ class _FullscreenCameraScreenState extends State<FullscreenCameraScreen> {
           child: CameraPreview(widget.controller),
         ),
       );
+
+      if (!_isFrozen) {
+        baseContent = GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onScaleStart: (details) {
+            _baseZoomLevel = _currentZoomLevel;
+            setState(() {
+              _isZooming = true;
+            });
+          },
+          onScaleUpdate: (details) {
+            setState(() {
+              _currentZoomLevel = (_baseZoomLevel * details.scale)
+                  .clamp(_minAvailableZoom, _maxAvailableZoom);
+            });
+            widget.controller.setZoomLevel(_currentZoomLevel);
+          },
+          onScaleEnd: (details) {
+            setState(() {
+              _isZooming = false;
+            });
+          },
+          child: baseContent,
+        );
+      }
     }
 
     Widget content = Container(
@@ -231,6 +279,36 @@ class _FullscreenCameraScreenState extends State<FullscreenCameraScreen> {
           Hero(
             tag: 'camera_preview',
             child: content,
+          ),
+          
+          // Zoom Indicator
+          Positioned(
+            top: MediaQuery.of(context).size.height / 2 - 20,
+            left: 0,
+            right: 0,
+            child: IgnorePointer(
+              child: AnimatedOpacity(
+                opacity: _isZooming ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 300),
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.6),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      '${_currentZoomLevel.toStringAsFixed(1)}x',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ),
           
           // Flash effect during capture
