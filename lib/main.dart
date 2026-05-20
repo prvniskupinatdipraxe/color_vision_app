@@ -5,8 +5,15 @@ import 'theme/app_theme.dart';
 import 'services/theme_provider.dart';
 import 'services/camera_manager.dart';
 
-void main() {
+import 'package:flutter/services.dart';
+
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
   
   // Preload camera asynchronously in the background
   CameraManager().initialize();

@@ -5,6 +5,7 @@ import '../widgets/camera_preview_placeholder.dart';
 import '../widgets/glass_container.dart';
 import '../services/color_vision_simulator.dart';
 import '../services/theme_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 enum DeficiencyType { protan, deutan, tritan }
 
@@ -17,7 +18,41 @@ class SimulateScreen extends StatefulWidget {
 
 class _SimulateScreenState extends State<SimulateScreen> {
   DeficiencyType _selectedType = DeficiencyType.protan;
-  double _intensity = 0.5;
+  double _intensity = 0.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSettings();
+  }
+
+  Future<void> _loadSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _intensity = prefs.getDouble('simulate_intensity') ?? 0.0;
+      final typeIndex = prefs.getInt('simulate_type') ?? 0;
+      if (typeIndex >= 0 && typeIndex < DeficiencyType.values.length) {
+        _selectedType = DeficiencyType.values[typeIndex];
+      }
+    });
+  }
+
+  Future<void> _saveSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble('simulate_intensity', _intensity);
+    await prefs.setInt('simulate_type', _selectedType.index);
+    
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Settings saved'),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
 
   Color _getAccentColor(DeficiencyType type) {
     switch (type) {
@@ -207,6 +242,27 @@ class _SimulateScreenState extends State<SimulateScreen> {
                           _intensity = val;
                         });
                       },
+                    ),
+                    const SizedBox(height: 32),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: _saveSettings,
+                        icon: const Icon(Icons.save_outlined),
+                        label: const Text('Save Current Settings'),
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          backgroundColor: _getAccentColor(_selectedType).withOpacity(0.15),
+                          foregroundColor: _getAccentColor(_selectedType),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            side: BorderSide(
+                              color: _getAccentColor(_selectedType).withOpacity(0.3),
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
                   ],
                 ),

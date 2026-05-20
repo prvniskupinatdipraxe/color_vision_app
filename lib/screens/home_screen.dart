@@ -5,6 +5,7 @@ import '../widgets/camera_preview_placeholder.dart';
 import '../widgets/glass_container.dart';
 import '../services/color_vision_simulator.dart';
 import '../services/theme_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -14,9 +15,42 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  double redValue = 0.5;
-  double greenValue = 0.5;
-  double blueValue = 0.5;
+  double redValue = 1.0;
+  double greenValue = 1.0;
+  double blueValue = 1.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSettings();
+  }
+
+  Future<void> _loadSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      redValue = prefs.getDouble('assist_red') ?? 1.0;
+      greenValue = prefs.getDouble('assist_green') ?? 1.0;
+      blueValue = prefs.getDouble('assist_blue') ?? 1.0;
+    });
+  }
+
+  Future<void> _saveSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble('assist_red', redValue);
+    await prefs.setDouble('assist_green', greenValue);
+    await prefs.setDouble('assist_blue', blueValue);
+    
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Settings saved'),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
 
   void _applyPreset(double value) {
     setState(() {
@@ -169,6 +203,27 @@ class _HomeScreenState extends State<HomeScreen> {
                           blueValue = val;
                         });
                       },
+                    ),
+                    const SizedBox(height: 32),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: _saveSettings,
+                        icon: const Icon(Icons.save_outlined),
+                        label: const Text('Save Current Settings'),
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.15),
+                          foregroundColor: Theme.of(context).colorScheme.primary,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            side: BorderSide(
+                              color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
                   ],
                 ),

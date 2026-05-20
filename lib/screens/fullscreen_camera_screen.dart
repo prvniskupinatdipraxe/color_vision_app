@@ -7,6 +7,9 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
 import 'package:flutter/services.dart';
 import 'package:device_info_plus/device_info_plus.dart';
+import 'dart:ui' as ui;
+import 'package:flutter/rendering.dart';
+import 'dart:typed_data';
 
 class FullscreenCameraScreen extends StatefulWidget {
   final CameraController controller;
@@ -23,6 +26,7 @@ class FullscreenCameraScreen extends StatefulWidget {
 }
 
 class _FullscreenCameraScreenState extends State<FullscreenCameraScreen> {
+  final GlobalKey _previewKey = GlobalKey();
   bool _showOriginal = false;
   double _intensity = 1.0;
   bool _isFrozen = false;
@@ -138,16 +142,19 @@ class _FullscreenCameraScreenState extends State<FullscreenCameraScreen> {
     HapticFeedback.mediumImpact();
 
     try {
-      XFile file;
-      if (_isFrozen && _importedImage != null) {
-        // If viewing an imported image, just "re-save" or notify
-        // But user asked to capture camera feed.
-        file = XFile(_importedImage!.path);
-      } else {
-        file = await widget.controller.takePicture();
-      }
+      final boundary = _previewKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+      if (boundary == null) throw Exception("Could not find preview boundary");
 
-      final result = await ImageGallerySaverPlus.saveFile(file.path);
+      final ui.Image image = await boundary.toImage(pixelRatio: 3.0);
+      final ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+      if (byteData == null) throw Exception("Failed to convert image to bytes");
+      final Uint8List pngBytes = byteData.buffer.asUint8List();
+
+      final result = await ImageGallerySaverPlus.saveImage(
+        pngBytes,
+        quality: 100,
+        name: "vision_assist_${DateTime.now().millisecondsSinceEpoch}",
+      );
       
       if (mounted) {
         final bool isSuccess = result != null && result['isSuccess'] == true;
@@ -276,9 +283,12 @@ class _FullscreenCameraScreenState extends State<FullscreenCameraScreen> {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          Hero(
-            tag: 'camera_preview',
-            child: content,
+          RepaintBoundary(
+            key: _previewKey,
+            child: Hero(
+              tag: 'camera_preview',
+              child: content,
+            ),
           ),
           
           // Zoom Indicator
