@@ -23,34 +23,26 @@ class AboutScreen extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               GlassContainer(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.all(16),
                 child: Column(
                   children: [
-                    Container(
-                      width: 100,
-                      height: 100,
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: Theme.of(context).colorScheme.primary,
-                          width: 2,
-                        ),
-                      ),
-                      child: Icon(
-                        Icons.visibility,
-                        size: 48,
-                        color: Theme.of(context).colorScheme.primary,
+                    ClipOval(
+                      child: Image.asset(
+                        'assets/images/logo.png',
+                        width: 100,
+                        height: 100,
+                        fit: BoxFit.cover,
+                        filterQuality: FilterQuality.high,
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 16),
                     Text(
                       'Vision Assist Pro',
                       style: Theme.of(context).textTheme.headlineMedium,
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Version 1.3.0',
+                      'Version 1.9.0',
                       style: TextStyle(color: isDark ? Colors.white54 : Colors.black45),
                     ),
                     const SizedBox(height: 24),
