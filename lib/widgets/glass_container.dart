@@ -11,6 +11,7 @@ class GlassContainer extends StatelessWidget {
   final EdgeInsetsGeometry? margin;
   final double borderRadius;
   final List<Color>? gradientColors;
+  final Color? borderColor;
 
   const GlassContainer({
     super.key,
@@ -21,6 +22,7 @@ class GlassContainer extends StatelessWidget {
     this.margin,
     this.borderRadius = 24.0,
     this.gradientColors,
+    this.borderColor,
   });
 
   @override
@@ -65,7 +67,7 @@ class GlassContainer extends StatelessWidget {
                   : null,
               borderRadius: BorderRadius.circular(borderRadius),
               border: Border.all(
-                color: baseColor.withOpacity(
+                color: borderColor ?? baseColor.withOpacity(
                   (isDark ? 0.15 : 0.08) * opacityMultiplier,
                 ),
                 width: borderWidth,

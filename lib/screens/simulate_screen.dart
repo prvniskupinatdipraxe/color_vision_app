@@ -210,44 +210,75 @@ class _SimulateScreenState extends State<SimulateScreen> {
     final isSelected = _selectedType == type;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
+    Color typeColor;
+    switch (type) {
+      case DeficiencyType.protan:
+        typeColor = Colors.redAccent;
+        break;
+      case DeficiencyType.deutan:
+        typeColor = Colors.greenAccent;
+        break;
+      case DeficiencyType.tritan:
+        typeColor = Colors.blueAccent;
+        break;
+    }
+
     return Expanded(
       child: GestureDetector(
         onTap: () => setState(() => _selectedType = type),
-        child: GlassContainer(
-          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
-          gradientColors: isSelected && !themeProvider.isSimplifiedUI
-              ? [
-                  Theme.of(context).colorScheme.primary.withOpacity(0.3),
-                  Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                ]
-              : null,
-          child: Column(
-            children: [
-              Icon(
-                icon,
-                color: isSelected ? Theme.of(context).colorScheme.primary : (isDark ? Colors.white38 : Colors.black26),
-                size: 28,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                title,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  color: isSelected ? (isDark ? Colors.white : Colors.black87) : (isDark ? Colors.white54 : Colors.black54),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: isSelected && !themeProvider.isSimplifiedUI
+                ? [
+                    BoxShadow(
+                      color: typeColor.withOpacity(0.15),
+                      blurRadius: 15,
+                      spreadRadius: 1,
+                    ),
+                  ]
+                : null,
+          ),
+          child: GlassContainer(
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+            gradientColors: isSelected && !themeProvider.isSimplifiedUI
+                ? [
+                    Theme.of(context).colorScheme.primary.withOpacity(0.25),
+                    Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                  ]
+                : null,
+            child: Column(
+              children: [
+                Icon(
+                  icon,
+                  color: typeColor.withOpacity(isSelected ? 1.0 : 0.6),
+                  size: 28,
+                  shadows: isSelected ? [
+                    Shadow(color: typeColor.withOpacity(0.5), blurRadius: 10)
+                  ] : null,
                 ),
-              ),
-              if (!themeProvider.isSimplifiedUI)
+                const SizedBox(height: 8),
                 Text(
-                  subtitle,
+                  title,
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 9,
-                    color: isDark ? Colors.white38 : Colors.black38,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white : Colors.black87,
                   ),
                 ),
-            ],
+                if (!themeProvider.isSimplifiedUI)
+                  Text(
+                    subtitle,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 9,
+                      color: isDark ? Colors.white38 : Colors.black38,
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
       ),
