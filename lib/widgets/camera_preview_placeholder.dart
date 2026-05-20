@@ -164,23 +164,21 @@ class _CameraPreviewPlaceholderState extends State<CameraPreviewPlaceholder> wit
             isDark ? Colors.black.withOpacity(0.1) : Colors.black.withOpacity(0.02),
           ],
           child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.camera_alt_outlined,
-                  size: 56,
-                  color: isDark ? Colors.white.withOpacity(0.4) : Colors.black.withOpacity(0.3),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Initializing Camera...',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        color: isDark ? Colors.white.withOpacity(0.6) : Colors.black.withOpacity(0.5),
-                        fontSize: 18,
-                      ),
-                ),
-              ],
+            child: AnimatedBuilder(
+              animation: _glowAnimation,
+              builder: (context, child) {
+                return Opacity(
+                  opacity: _glowAnimation.value * 0.8, // 0.16 to 0.48 opacity
+                  child: ClipOval(
+                    child: Image.asset(
+                      'assets/images/logo.png',
+                      width: 64,
+                      height: 64,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                );
+              },
             ),
           ),
         ),

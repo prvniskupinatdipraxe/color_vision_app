@@ -27,10 +27,17 @@ class CameraManager {
       if (cameras.isNotEmpty) {
         _controller = CameraController(
           cameras.first,
-          ResolutionPreset.medium,
+          ResolutionPreset.high,
           enableAudio: false,
+          imageFormatGroup: ImageFormatGroup.yuv420,
         );
+        
         await _controller!.initialize();
+        
+        // Wait a short duration to ensure the first frame is pushed to the SurfaceTexture
+        // This prevents the black flash when the Texture widget first mounts
+        await Future.delayed(const Duration(milliseconds: 300));
+        
         _isInitialized = true;
       }
     } catch (e) {
