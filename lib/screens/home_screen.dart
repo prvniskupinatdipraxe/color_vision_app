@@ -141,7 +141,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     AnimatedColorSlider(
                       label: 'Red Sensitivity (Protan)',
                       value: redValue,
-                      activeColor: Colors.redAccent,
+                      activeColor: const Color(0xFFE57373),
                       onChanged: (val) {
                         setState(() {
                           redValue = val;
@@ -152,7 +152,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     AnimatedColorSlider(
                       label: 'Green Sensitivity (Deutan)',
                       value: greenValue,
-                      activeColor: Colors.greenAccent,
+                      activeColor: const Color(0xFF81C784),
                       onChanged: (val) {
                         setState(() {
                           greenValue = val;
@@ -163,7 +163,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     AnimatedColorSlider(
                       label: 'Blue Sensitivity (Tritan)',
                       value: blueValue,
-                      activeColor: Colors.blueAccent,
+                      activeColor: const Color(0xFF64B5F6),
                       onChanged: (val) {
                         setState(() {
                           blueValue = val;
@@ -193,10 +193,10 @@ class _HomeScreenState extends State<HomeScreen> {
           onPressed: () => _applyPreset(value),
           style: ElevatedButton.styleFrom(
             backgroundColor: isReset 
-                ? (isHighContrast ? Colors.red.withOpacity(0.2) : Colors.redAccent.withOpacity(0.1))
+                ? (isHighContrast ? const Color(0xFFE57373).withOpacity(0.2) : const Color(0xFFE57373).withOpacity(0.1))
                 : (isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.05)),
             foregroundColor: isReset 
-                ? (isDark && isHighContrast ? Colors.white : Colors.redAccent) 
+                ? (isDark && isHighContrast ? Colors.white : const Color(0xFFE57373)) 
                 : (isDark ? Colors.white : Colors.black87),
             padding: const EdgeInsets.symmetric(vertical: 12),
             elevation: 0,
@@ -204,7 +204,7 @@ class _HomeScreenState extends State<HomeScreen> {
               borderRadius: BorderRadius.circular(12),
               side: BorderSide(
                 color: isReset 
-                    ? (isHighContrast ? Colors.red : Colors.redAccent.withOpacity(0.3)) 
+                    ? (isHighContrast ? const Color(0xFFE57373) : const Color(0xFFE57373).withOpacity(0.3)) 
                     : (isHighContrast ? (isDark ? Colors.white38 : Colors.black38) : (isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.1))),
                 width: isHighContrast ? 2.0 : 1.0,
               ),

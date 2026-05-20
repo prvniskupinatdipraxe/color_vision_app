@@ -9,8 +9,9 @@ import '../services/theme_provider.dart';
 
 class CameraPreviewPlaceholder extends StatefulWidget {
   final List<double>? matrix;
+  final Color? accentColor;
 
-  const CameraPreviewPlaceholder({super.key, this.matrix});
+  const CameraPreviewPlaceholder({super.key, this.matrix, this.accentColor});
 
   @override
   State<CameraPreviewPlaceholder> createState() => _CameraPreviewPlaceholderState();
@@ -94,11 +95,11 @@ class _CameraPreviewPlaceholderState extends State<CameraPreviewPlaceholder> wit
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: Colors.redAccent.withOpacity(0.85),
+                color: (widget.accentColor ?? Colors.redAccent).withOpacity(0.85),
                 borderRadius: BorderRadius.circular(10),
                 boxShadow: themeProvider.isSimplifiedUI ? null : [
                   BoxShadow(
-                    color: Colors.redAccent.withOpacity(0.3),
+                    color: (widget.accentColor ?? Colors.redAccent).withOpacity(0.3),
                     blurRadius: 8,
                     spreadRadius: 1,
                   ),
@@ -223,7 +224,7 @@ class _CameraPreviewPlaceholderState extends State<CameraPreviewPlaceholder> wit
                 borderRadius: BorderRadius.circular(28.0),
                 boxShadow: themeProvider.isSimplifiedUI ? null : [
                   BoxShadow(
-                    color: Theme.of(context).colorScheme.primary.withOpacity(_glowAnimation.value * 0.5),
+                    color: (widget.accentColor ?? Theme.of(context).colorScheme.primary).withOpacity(_glowAnimation.value * 0.5),
                     blurRadius: 25,
                     spreadRadius: 2,
                   ),

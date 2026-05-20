@@ -19,6 +19,17 @@ class _SimulateScreenState extends State<SimulateScreen> {
   DeficiencyType _selectedType = DeficiencyType.protan;
   double _intensity = 0.5;
 
+  Color _getAccentColor(DeficiencyType type) {
+    switch (type) {
+      case DeficiencyType.protan:
+        return const Color(0xFFE57373); // Soft red
+      case DeficiencyType.deutan:
+        return const Color(0xFF81C784); // Soft green
+      case DeficiencyType.tritan:
+        return const Color(0xFF64B5F6); // Soft blue
+    }
+  }
+
   void _showInfoSheet(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -126,7 +137,10 @@ class _SimulateScreenState extends State<SimulateScreen> {
                 ],
               ),
               const SizedBox(height: 24),
-              CameraPreviewPlaceholder(matrix: matrix),
+              CameraPreviewPlaceholder(
+                matrix: matrix,
+                accentColor: _getAccentColor(_selectedType),
+              ),
               const SizedBox(height: 24),
               
               Text(
@@ -177,9 +191,9 @@ class _SimulateScreenState extends State<SimulateScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
-                          _buildIntensityPreset(context, 'Mild', 0.2),
-                          _buildIntensityPreset(context, 'Medium', 0.5),
-                          _buildIntensityPreset(context, 'Severe', 1.0),
+                          _buildIntensityPreset(context, 'Mild', 0.2, _getAccentColor(_selectedType)),
+                          _buildIntensityPreset(context, 'Medium', 0.5, _getAccentColor(_selectedType)),
+                          _buildIntensityPreset(context, 'Severe', 1.0, _getAccentColor(_selectedType)),
                         ],
                       ),
                     ],
@@ -187,7 +201,7 @@ class _SimulateScreenState extends State<SimulateScreen> {
                     AnimatedColorSlider(
                       label: 'Simulation Strength',
                       value: _intensity,
-                      activeColor: Theme.of(context).colorScheme.primary,
+                      activeColor: _getAccentColor(_selectedType),
                       onChanged: (val) {
                         setState(() {
                           _intensity = val;
@@ -209,19 +223,7 @@ class _SimulateScreenState extends State<SimulateScreen> {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isSelected = _selectedType == type;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    Color typeColor;
-    switch (type) {
-      case DeficiencyType.protan:
-        typeColor = Colors.redAccent;
-        break;
-      case DeficiencyType.deutan:
-        typeColor = Colors.greenAccent;
-        break;
-      case DeficiencyType.tritan:
-        typeColor = Colors.blueAccent;
-        break;
-    }
+    final typeColor = _getAccentColor(type);
 
     return Expanded(
       child: GestureDetector(
@@ -230,6 +232,7 @@ class _SimulateScreenState extends State<SimulateScreen> {
           duration: const Duration(milliseconds: 300),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(24),
+            border: isSelected ? Border.all(color: typeColor.withOpacity(0.5), width: 1.5) : null,
             boxShadow: isSelected && !themeProvider.isSimplifiedUI
                 ? [
                     BoxShadow(
@@ -244,8 +247,8 @@ class _SimulateScreenState extends State<SimulateScreen> {
             padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
             gradientColors: isSelected && !themeProvider.isSimplifiedUI
                 ? [
-                    Theme.of(context).colorScheme.primary.withOpacity(0.25),
-                    Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                    typeColor.withOpacity(0.25),
+                    typeColor.withOpacity(0.05),
                   ]
                 : null,
             child: Column(
@@ -285,7 +288,7 @@ class _SimulateScreenState extends State<SimulateScreen> {
     );
   }
 
-  Widget _buildIntensityPreset(BuildContext context, String label, double value) {
+  Widget _buildIntensityPreset(BuildContext context, String label, double value, Color accentColor) {
     final isSelected = (_intensity - value).abs() < 0.05;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -296,7 +299,7 @@ class _SimulateScreenState extends State<SimulateScreen> {
           onPressed: () => setState(() => _intensity = value),
           style: ElevatedButton.styleFrom(
             backgroundColor: isSelected 
-                ? Theme.of(context).colorScheme.primary.withOpacity(0.2) 
+                ? accentColor.withOpacity(0.2) 
                 : (isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.05)),
             foregroundColor: isSelected ? (isDark ? Colors.white : Colors.black87) : (isDark ? Colors.white54 : Colors.black54),
             padding: const EdgeInsets.symmetric(vertical: 12),
@@ -305,7 +308,7 @@ class _SimulateScreenState extends State<SimulateScreen> {
               borderRadius: BorderRadius.circular(12),
               side: BorderSide(
                 color: isSelected 
-                    ? Theme.of(context).colorScheme.primary.withOpacity(0.5) 
+                    ? accentColor.withOpacity(0.5) 
                     : (isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.1)),
               ),
             ),

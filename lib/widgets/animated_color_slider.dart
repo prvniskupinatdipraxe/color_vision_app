@@ -2,6 +2,54 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/theme_provider.dart';
 
+class GradientRectSliderTrackShape extends SliderTrackShape with BaseSliderTrackShape {
+  final LinearGradient gradient;
+
+  const GradientRectSliderTrackShape({
+    required this.gradient,
+  });
+
+  @override
+  void paint(
+    PaintingContext context,
+    Offset offset, {
+    required RenderBox parentBox,
+    required SliderThemeData sliderTheme,
+    required Animation<double> enableAnimation,
+    required TextDirection textDirection,
+    required Offset thumbCenter,
+    Offset? secondaryOffset,
+    bool isDiscrete = false,
+    bool isEnabled = false,
+    double additionalActiveTrackHeight = 2,
+  }) {
+    if (sliderTheme.trackHeight == null || sliderTheme.trackHeight! <= 0) return;
+
+    final Rect trackRect = getPreferredRect(
+      parentBox: parentBox,
+      offset: offset,
+      sliderTheme: sliderTheme,
+      isEnabled: isEnabled,
+      isDiscrete: isDiscrete,
+    );
+
+    final activeTrackRect = Rect.fromLTRB(trackRect.left, trackRect.top, thumbCenter.dx, trackRect.bottom);
+    final inactiveTrackRect = Rect.fromLTRB(thumbCenter.dx, trackRect.top, trackRect.right, trackRect.bottom);
+
+    final Paint activePaint = Paint()..shader = gradient.createShader(trackRect);
+    final Paint inactivePaint = Paint()..color = sliderTheme.inactiveTrackColor!;
+
+    context.canvas.drawRRect(
+      RRect.fromRectAndRadius(activeTrackRect, Radius.circular(trackRect.height / 2)),
+      activePaint,
+    );
+    context.canvas.drawRRect(
+      RRect.fromRectAndRadius(inactiveTrackRect, Radius.circular(trackRect.height / 2)),
+      inactivePaint,
+    );
+  }
+}
+
 class AnimatedColorSlider extends StatelessWidget {
   final String label;
   final double value;
@@ -56,8 +104,18 @@ class AnimatedColorSlider extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 4),
-        SizedBox(
+        Container(
           height: 32, // Increased height for better accessibility
+          decoration: BoxDecoration(
+            boxShadow: [
+              if (!themeProvider.isSimplifiedUI)
+                BoxShadow(
+                  color: activeColor.withOpacity(0.15),
+                  blurRadius: 12,
+                  spreadRadius: 1,
+                ),
+            ],
+          ),
           child: SliderTheme(
             data: Theme.of(context).sliderTheme.copyWith(
                   activeTrackColor: activeColor,
@@ -66,7 +124,15 @@ class AnimatedColorSlider extends StatelessWidget {
                       : (isHighContrast ? Colors.black38 : Colors.black12),
                   thumbColor: isDark && isHighContrast ? Colors.white : activeColor,
                   overlayColor: activeColor.withOpacity(0.2),
-                  trackHeight: isHighContrast ? 4.0 : 2.0,
+                  trackHeight: isHighContrast ? 4.0 : 3.0,
+                  trackShape: GradientRectSliderTrackShape(
+                    gradient: LinearGradient(
+                      colors: [
+                        activeColor.withOpacity(0.3),
+                        activeColor,
+                      ],
+                    ),
+                  ),
                   thumbShape: RoundSliderThumbShape(
                     enabledThumbRadius: isHighContrast ? 10 : 8, 
                     elevation: isHighContrast ? 12 : 8
