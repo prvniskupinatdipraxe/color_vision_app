@@ -10,8 +10,9 @@ import '../services/theme_provider.dart';
 class CameraPreviewPlaceholder extends StatefulWidget {
   final List<double>? matrix;
   final Color? accentColor;
+  final bool isSimulation;
 
-  const CameraPreviewPlaceholder({super.key, this.matrix, this.accentColor});
+  const CameraPreviewPlaceholder({super.key, this.matrix, this.accentColor, this.isSimulation = false});
 
   @override
   State<CameraPreviewPlaceholder> createState() => _CameraPreviewPlaceholderState();
@@ -222,6 +223,7 @@ class _CameraPreviewPlaceholderState extends State<CameraPreviewPlaceholder> wit
                   child: FullscreenCameraScreen(
                     controller: controller,
                     baseMatrix: widget.matrix,
+                    isSimulation: widget.isSimulation,
                   ),
                 );
               },

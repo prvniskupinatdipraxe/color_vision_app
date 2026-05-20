@@ -14,11 +14,13 @@ import 'dart:typed_data';
 class FullscreenCameraScreen extends StatefulWidget {
   final CameraController controller;
   final List<double>? baseMatrix;
+  final bool isSimulation;
 
   const FullscreenCameraScreen({
     super.key,
     required this.controller,
     this.baseMatrix,
+    this.isSimulation = false,
   });
 
   @override
@@ -386,7 +388,7 @@ class _FullscreenCameraScreenState extends State<FullscreenCameraScreen> {
                           });
                         }),
                         const SizedBox(width: 8),
-                        _buildModeChip('Assisted', !_showOriginal, () {
+                        _buildModeChip(widget.isSimulation ? 'Simulated' : 'Assisted', !_showOriginal, () {
                           setState(() {
                             _showOriginal = false;
                           });

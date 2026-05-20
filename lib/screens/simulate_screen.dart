@@ -175,6 +175,7 @@ class _SimulateScreenState extends State<SimulateScreen> {
               CameraPreviewPlaceholder(
                 matrix: matrix,
                 accentColor: _getAccentColor(_selectedType),
+                isSimulation: true,
               ),
               const SizedBox(height: 24),
               
