@@ -10,6 +10,7 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'dart:ui' as ui;
 import 'package:flutter/rendering.dart';
 import 'dart:typed_data';
+import 'dart:async';
 
 class FullscreenCameraScreen extends StatefulWidget {
   final CameraController controller;
@@ -40,11 +41,38 @@ class _FullscreenCameraScreenState extends State<FullscreenCameraScreen> {
   double _minAvailableZoom = 1.0;
   double _maxAvailableZoom = 1.0;
   bool _isZooming = false;
+  
+  Timer? _hideControlsTimer;
+  bool _showControls = true;
 
   @override
   void initState() {
     super.initState();
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     _initZoomLevels();
+    _startHideTimer();
+  }
+
+  void _startHideTimer() {
+    _hideControlsTimer?.cancel();
+    _hideControlsTimer = Timer(const Duration(seconds: 3), () {
+      if (mounted && !_isZooming && !_isCapturing) {
+        setState(() {
+          _showControls = false;
+        });
+      }
+    });
+  }
+
+  void _toggleControls() {
+    setState(() {
+      _showControls = !_showControls;
+    });
+    if (_showControls) {
+      _startHideTimer();
+    } else {
+      _hideControlsTimer?.cancel();
+    }
   }
 
   Future<void> _initZoomLevels() async {
@@ -60,6 +88,8 @@ class _FullscreenCameraScreenState extends State<FullscreenCameraScreen> {
 
   @override
   void dispose() {
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    _hideControlsTimer?.cancel();
     if (_isFrozen) {
       widget.controller.resumePreview();
     }
@@ -235,11 +265,13 @@ class _FullscreenCameraScreenState extends State<FullscreenCameraScreen> {
       if (!_isFrozen) {
         baseContent = GestureDetector(
           behavior: HitTestBehavior.opaque,
+          onTap: _toggleControls,
           onScaleStart: (details) {
             _baseZoomLevel = _currentZoomLevel;
             setState(() {
               _isZooming = true;
             });
+            _startHideTimer();
           },
           onScaleUpdate: (details) {
             setState(() {
@@ -252,7 +284,14 @@ class _FullscreenCameraScreenState extends State<FullscreenCameraScreen> {
             setState(() {
               _isZooming = false;
             });
+            _startHideTimer();
           },
+          child: baseContent,
+        );
+      } else {
+        baseContent = GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: _toggleControls,
           child: baseContent,
         );
       }
@@ -334,28 +373,39 @@ class _FullscreenCameraScreenState extends State<FullscreenCameraScreen> {
             top: MediaQuery.of(context).padding.top + 16,
             left: 16,
             right: 16,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _buildFloatingButton(Icons.close, () => Navigator.pop(context)),
-                Row(
-                  children: [
-                    _buildFloatingButton(Icons.image_outlined, _importImage),
-                    const SizedBox(width: 12),
-                    _buildFloatingButton(
-                      _isCapturing ? Icons.hourglass_empty : Icons.camera_alt,
-                      _captureComparison,
-                      isActive: _isCapturing,
-                    ),
-                    const SizedBox(width: 12),
-                    _buildFloatingButton(
-                      _isFrozen ? Icons.play_arrow : Icons.pause,
-                      _toggleFreeze,
-                      isActive: _isFrozen,
-                    ),
-                  ],
+            child: AnimatedOpacity(
+              opacity: _showControls ? 1.0 : 0.0,
+              duration: const Duration(milliseconds: 300),
+              child: IgnorePointer(
+                ignoring: !_showControls,
+                child: Listener(
+                  onPointerDown: (_) => _hideControlsTimer?.cancel(),
+                  onPointerUp: (_) => _startHideTimer(),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _buildFloatingButton(Icons.close, () => Navigator.pop(context)),
+                      Row(
+                        children: [
+                          _buildFloatingButton(Icons.image_outlined, _importImage),
+                          const SizedBox(width: 12),
+                          _buildFloatingButton(
+                            _isCapturing ? Icons.hourglass_empty : Icons.camera_alt,
+                            _captureComparison,
+                            isActive: _isCapturing,
+                          ),
+                          const SizedBox(width: 12),
+                          _buildFloatingButton(
+                            _isFrozen ? Icons.play_arrow : Icons.pause,
+                            _toggleFreeze,
+                            isActive: _isFrozen,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-              ],
+              ),
             ),
           ),
 
@@ -364,73 +414,84 @@ class _FullscreenCameraScreenState extends State<FullscreenCameraScreen> {
             bottom: MediaQuery.of(context).padding.bottom + 24,
             left: 24,
             right: 24,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.6),
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.15),
-                  width: 1.5,
-                ),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Mode Toggles
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
+            child: AnimatedOpacity(
+              opacity: _showControls ? 1.0 : 0.0,
+              duration: const Duration(milliseconds: 300),
+              child: IgnorePointer(
+                ignoring: !_showControls,
+                child: Listener(
+                  onPointerDown: (_) => _hideControlsTimer?.cancel(),
+                  onPointerUp: (_) => _startHideTimer(),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.6),
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(
+                        color: Colors.white.withOpacity(0.15),
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        _buildModeChip('Original', _showOriginal, () {
-                          setState(() {
-                            _showOriginal = true;
-                          });
-                        }),
-                        const SizedBox(width: 8),
-                        _buildModeChip(widget.isSimulation ? 'Simulated' : 'Assisted', !_showOriginal, () {
-                          setState(() {
-                            _showOriginal = false;
-                          });
-                        }),
+                        // Mode Toggles
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: [
+                              _buildModeChip('Original', _showOriginal, () {
+                                setState(() {
+                                  _showOriginal = true;
+                                });
+                              }),
+                              const SizedBox(width: 8),
+                              _buildModeChip(widget.isSimulation ? 'Simulated' : 'Assisted', !_showOriginal, () {
+                                setState(() {
+                                  _showOriginal = false;
+                                });
+                              }),
+                            ],
+                          ),
+                        ),
+                        
+                        // Compact Intensity Slider
+                        if (!_showOriginal) ...[
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              const Icon(Icons.opacity, color: Colors.white54, size: 20),
+                              Expanded(
+                                child: SliderTheme(
+                                  data: SliderTheme.of(context).copyWith(
+                                    activeTrackColor: Theme.of(context).colorScheme.primary,
+                                    inactiveTrackColor: Colors.white24,
+                                    thumbColor: Colors.white,
+                                    overlayColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                                    trackHeight: 4.0,
+                                    thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
+                                  ),
+                                  child: Slider(
+                                    value: _intensity,
+                                    onChanged: (val) {
+                                      setState(() {
+                                        _intensity = val;
+                                      });
+                                    },
+                                  ),
+                                ),
+                              ),
+                              Text(
+                                '${(_intensity * 100).toInt()}%',
+                                style: const TextStyle(color: Colors.white54, fontSize: 12),
+                              ),
+                            ],
+                          ),
+                        ],
                       ],
                     ),
                   ),
-                  
-                  // Compact Intensity Slider
-                  if (!_showOriginal) ...[
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        const Icon(Icons.opacity, color: Colors.white54, size: 20),
-                        Expanded(
-                          child: SliderTheme(
-                            data: SliderTheme.of(context).copyWith(
-                              activeTrackColor: Theme.of(context).colorScheme.primary,
-                              inactiveTrackColor: Colors.white24,
-                              thumbColor: Colors.white,
-                              overlayColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
-                              trackHeight: 4.0,
-                              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
-                            ),
-                            child: Slider(
-                              value: _intensity,
-                              onChanged: (val) {
-                                setState(() {
-                                  _intensity = val;
-                                });
-                              },
-                            ),
-                          ),
-                        ),
-                        Text(
-                          '${(_intensity * 100).toInt()}%',
-                          style: const TextStyle(color: Colors.white54, fontSize: 12),
-                        ),
-                      ],
-                    ),
-                  ],
-                ],
+                ),
               ),
             ),
           ),
