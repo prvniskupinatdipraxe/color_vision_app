@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../widgets/glass_container.dart';
 import '../services/theme_provider.dart';
-import 'terms_screen.dart';
-import 'privacy_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -35,35 +33,7 @@ class SettingsScreen extends StatelessWidget {
               const SizedBox(height: 16),
               const AccessibilitySettings(),
               
-              const SizedBox(height: 32),
-              _buildSectionTitle(context, 'Legal & Info'),
-              const SizedBox(height: 16),
-              GlassContainer(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: Column(
-                  children: [
-                    _buildListTile(
-                      context,
-                      'Terms of Service',
-                      Icons.description_outlined,
-                      () => Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const TermsScreen()),
-                      ),
-                    ),
-                    Divider(color: isDark ? Colors.white10 : Colors.black12, height: 1),
-                    _buildListTile(
-                      context,
-                      'Privacy Policy',
-                      Icons.privacy_tip_outlined,
-                      () => Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const PrivacyScreen()),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+
 
               const SizedBox(height: 32),
               _buildSectionTitle(context, 'System'),
@@ -101,15 +71,7 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildListTile(BuildContext context, String title, IconData icon, VoidCallback onTap) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return ListTile(
-      leading: Icon(icon, color: isDark ? Colors.white70 : Colors.black54),
-      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w500)),
-      trailing: Icon(Icons.chevron_right, color: isDark ? Colors.white24 : Colors.black26),
-      onTap: onTap,
-    );
-  }
+
 }
 
 class ThemeSelector extends StatelessWidget {
