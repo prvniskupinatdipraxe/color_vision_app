@@ -20,17 +20,17 @@ class ColorVisionSimulator {
 
   // Deuteranopia matrix (Green-blind / Green cones missing)
   static const List<double> deuteranopia = [
-    0.367322, 0.860646, -0.227968, 0, 0,
-    0.280085, 0.672501, 0.047413, 0, 0,
-    -0.011820, 0.042940, 0.968881, 0, 0,
+    0.625, 0.375, 0.0, 0, 0,
+    0.700, 0.300, 0.0, 0, 0,
+    0.000, 0.300, 0.700, 0, 0,
     0, 0, 0, 1, 0,
   ];
 
   // Tritanopia matrix (Blue-blind / Blue cones missing)
   static const List<double> tritanopia = [
-    1.216703, -0.139225, -0.077478, 0, 0,
-    -0.073467, 0.926435, 0.147032, 0, 0,
-    0.044150, 0.276110, 0.679740, 0, 0,
+    0.950, 0.050, 0.000, 0, 0,
+    0.000, 0.43333, 0.56667, 0, 0,
+    0.000, 0.475, 0.525, 0, 0,
     0, 0, 0, 1, 0,
   ];
 
