@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../widgets/glass_container.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'terms_screen.dart';
 import 'privacy_screen.dart';
 
@@ -41,9 +42,17 @@ class AboutScreen extends StatelessWidget {
                       style: Theme.of(context).textTheme.headlineMedium,
                     ),
                     const SizedBox(height: 8),
-                    Text(
-                      'Version 1.19.0',
-                      style: TextStyle(color: isDark ? Colors.white54 : Colors.black45),
+                    FutureBuilder<PackageInfo>(
+                      future: PackageInfo.fromPlatform(),
+                      builder: (context, snapshot) {
+                        final versionStr = snapshot.hasData 
+                            ? 'Version ${snapshot.data!.version}'
+                            : 'Version ...';
+                        return Text(
+                          versionStr,
+                          style: TextStyle(color: isDark ? Colors.white54 : Colors.black45),
+                        );
+                      },
                     ),
                     const SizedBox(height: 24),
                     Text(

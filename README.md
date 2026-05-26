@@ -61,7 +61,7 @@ Vision Assist Pro je špičková mobilní aplikace vyvinutá v rámci platformy 
 - **State Management**: `Provider`
 - **Ukládání dat**: `shared_preferences`
 - **Zpracování barev**: GPU-akcelerované maticové transformace přes `ColorFiltered`.
-- **Verze**: 1.30.0+36
+- **Verze**: 1.31.0+41
 
 ## 📜 Licence
 © 2026 Vision Assist Pro. Všechna práva vyhrazena.
