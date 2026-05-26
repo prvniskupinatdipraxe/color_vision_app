@@ -37,6 +37,7 @@ class _FullscreenCameraScreenState extends State<FullscreenCameraScreen> {
   bool _isFrozen = false;
   File? _importedImage;
   bool _isCapturing = false;
+  bool _isTorchOn = false;
 
   double _currentZoomLevel = 1.0;
   double _baseZoomLevel = 1.0;
@@ -95,6 +96,9 @@ class _FullscreenCameraScreenState extends State<FullscreenCameraScreen> {
     if (_isFrozen) {
       widget.controller.resumePreview();
     }
+    if (_isTorchOn) {
+      widget.controller.setFlashMode(FlashMode.off);
+    }
     super.dispose();
   }
 
@@ -152,6 +156,27 @@ class _FullscreenCameraScreenState extends State<FullscreenCameraScreen> {
     }
     final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
     themeProvider.triggerHaptic();
+  }
+
+  Future<void> _toggleTorch() async {
+    try {
+      if (_isTorchOn) {
+        await widget.controller.setFlashMode(FlashMode.off);
+      } else {
+        await widget.controller.setFlashMode(FlashMode.torch);
+      }
+      setState(() {
+        _isTorchOn = !_isTorchOn;
+      });
+      final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+      themeProvider.triggerHaptic();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Flashlight not supported on this device')),
+        );
+      }
+    }
   }
 
   Future<void> _importImage() async {
@@ -396,6 +421,12 @@ class _FullscreenCameraScreenState extends State<FullscreenCameraScreen> {
                       Row(
                         children: [
                           _buildFloatingButton(Icons.image_outlined, _importImage),
+                          const SizedBox(width: 12),
+                          _buildFloatingButton(
+                            _isTorchOn ? Icons.flash_on : Icons.flash_off,
+                            _toggleTorch,
+                            isActive: _isTorchOn,
+                          ),
                           const SizedBox(width: 12),
                           _buildFloatingButton(
                             _isCapturing ? Icons.hourglass_empty : Icons.camera_alt,

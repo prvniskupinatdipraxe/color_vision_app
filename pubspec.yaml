@@ -1,7 +1,7 @@
 name: color_vision_app
 description: "A new Flutter project."
 publish_to: 'none'
-version: 1.31.0+41
+version: 1.33.0+43
 environment:
   sdk: ^3.11.5
 
