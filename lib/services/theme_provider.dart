@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ThemeProvider extends ChangeNotifier {
@@ -6,16 +7,19 @@ class ThemeProvider extends ChangeNotifier {
   static const String _highContrastKey = "high_contrast";
   static const String _largeTextKey = "large_text";
   static const String _simplifiedUIKey = "simplified_ui";
+  static const String _hapticKey = "haptic_feedback";
 
   ThemeMode _themeMode = ThemeMode.system;
   bool _isHighContrast = false;
   bool _isLargeText = false;
   bool _isSimplifiedUI = false;
+  bool _isHapticEnabled = true;
 
   ThemeMode get themeMode => _themeMode;
   bool get isHighContrast => _isHighContrast;
   bool get isLargeText => _isLargeText;
   bool get isSimplifiedUI => _isSimplifiedUI;
+  bool get isHapticEnabled => _isHapticEnabled;
 
   ThemeProvider() {
     _loadSettings();
@@ -49,11 +53,25 @@ class ThemeProvider extends ChangeNotifier {
     await prefs.setBool(_simplifiedUIKey, value);
   }
 
+  void setHapticFeedback(bool value) async {
+    _isHapticEnabled = value;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_hapticKey, value);
+  }
+
+  void triggerHaptic() {
+    if (_isHapticEnabled) {
+      HapticFeedback.lightImpact();
+    }
+  }
+
   void resetToDefaults() async {
     _themeMode = ThemeMode.system;
     _isHighContrast = false;
     _isLargeText = false;
     _isSimplifiedUI = false;
+    _isHapticEnabled = true;
     notifyListeners();
     
     final prefs = await SharedPreferences.getInstance();
@@ -61,6 +79,7 @@ class ThemeProvider extends ChangeNotifier {
     await prefs.setBool(_highContrastKey, false);
     await prefs.setBool(_largeTextKey, false);
     await prefs.setBool(_simplifiedUIKey, false);
+    await prefs.setBool(_hapticKey, true);
   }
 
   Future<void> _loadSettings() async {
@@ -74,6 +93,7 @@ class ThemeProvider extends ChangeNotifier {
     _isHighContrast = prefs.getBool(_highContrastKey) ?? false;
     _isLargeText = prefs.getBool(_largeTextKey) ?? false;
     _isSimplifiedUI = prefs.getBool(_simplifiedUIKey) ?? false;
+    _isHapticEnabled = prefs.getBool(_hapticKey) ?? true;
     
     notifyListeners();
   }

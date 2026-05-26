@@ -7,6 +7,8 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
 import 'package:flutter/services.dart';
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:provider/provider.dart';
+import '../services/theme_provider.dart';
 import 'dart:ui' as ui;
 import 'package:flutter/rendering.dart';
 import 'dart:typed_data';
@@ -148,7 +150,8 @@ class _FullscreenCameraScreenState extends State<FullscreenCameraScreen> {
     } else {
       widget.controller.resumePreview();
     }
-    HapticFeedback.selectionClick();
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    themeProvider.triggerHaptic();
   }
 
   Future<void> _importImage() async {
@@ -171,7 +174,8 @@ class _FullscreenCameraScreenState extends State<FullscreenCameraScreen> {
     if (!hasPermission) return;
 
     setState(() => _isCapturing = true);
-    HapticFeedback.mediumImpact();
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    themeProvider.triggerHaptic();
 
     try {
       final boundary = _previewKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
@@ -384,7 +388,11 @@ class _FullscreenCameraScreenState extends State<FullscreenCameraScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      _buildFloatingButton(Icons.close, () => Navigator.pop(context)),
+                      _buildFloatingButton(Icons.close, () {
+                        final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+                        themeProvider.triggerHaptic();
+                        Navigator.pop(context);
+                      }),
                       Row(
                         children: [
                           _buildFloatingButton(Icons.image_outlined, _importImage),
@@ -441,12 +449,16 @@ class _FullscreenCameraScreenState extends State<FullscreenCameraScreen> {
                           child: Row(
                             children: [
                               _buildModeChip('Original', _showOriginal, () {
+                                final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+                                themeProvider.triggerHaptic();
                                 setState(() {
                                   _showOriginal = true;
                                 });
                               }),
                               const SizedBox(width: 8),
                               _buildModeChip(widget.isSimulation ? 'Simulated' : 'Assisted', !_showOriginal, () {
+                                final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+                                themeProvider.triggerHaptic();
                                 setState(() {
                                   _showOriginal = false;
                                 });
@@ -477,6 +489,10 @@ class _FullscreenCameraScreenState extends State<FullscreenCameraScreen> {
                                       setState(() {
                                         _intensity = val;
                                       });
+                                    },
+                                    onChangeEnd: (val) {
+                                      final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+                                      themeProvider.triggerHaptic();
                                     },
                                   ),
                                 ),

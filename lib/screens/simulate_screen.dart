@@ -38,6 +38,9 @@ class _SimulateScreenState extends State<SimulateScreen> {
   }
 
   Future<void> _saveSettings() async {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    themeProvider.triggerHaptic();
+    
     final prefs = await SharedPreferences.getInstance();
     await prefs.setDouble('simulate_intensity', _intensity);
     await prefs.setInt('simulate_type', _selectedType.index);
@@ -284,7 +287,10 @@ class _SimulateScreenState extends State<SimulateScreen> {
 
     return Expanded(
       child: GestureDetector(
-        onTap: () => setState(() => _selectedType = type),
+        onTap: () {
+          themeProvider.triggerHaptic();
+          setState(() => _selectedType = type);
+        },
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 300),
           decoration: BoxDecoration(
@@ -349,11 +355,16 @@ class _SimulateScreenState extends State<SimulateScreen> {
     final isSelected = (_intensity - value).abs() < 0.05;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+
     return Expanded(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 4.0),
         child: ElevatedButton(
-          onPressed: () => setState(() => _intensity = value),
+          onPressed: () {
+            themeProvider.triggerHaptic();
+            setState(() => _intensity = value);
+          },
           style: ElevatedButton.styleFrom(
             backgroundColor: isSelected 
                 ? accentColor.withOpacity(0.2) 

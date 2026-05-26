@@ -41,6 +41,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _saveSettings() async {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    themeProvider.triggerHaptic();
+    
     final prefs = await SharedPreferences.getInstance();
     await prefs.setDouble('assist_red', redValue);
     await prefs.setDouble('assist_green', greenValue);
@@ -60,6 +63,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _applyPreset(double value) {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    themeProvider.triggerHaptic();
+
     setState(() {
       // Logic: Only update the channel matching the user's active handicap.
       // Other channels are reset to 1.0 (no correction) to ensure we only
@@ -282,6 +288,8 @@ class _HomeScreenState extends State<HomeScreen> {
     return Expanded(
       child: GestureDetector(
         onTap: () {
+          final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+          themeProvider.triggerHaptic();
           setState(() {
             _activeType = type;
           });

@@ -142,6 +142,9 @@ class AnimatedColorSlider extends StatelessWidget {
             child: Slider(
               value: value,
               onChanged: onChanged,
+              onChangeEnd: (val) {
+                themeProvider.triggerHaptic();
+              },
             ),
           ),
         ),

@@ -44,6 +44,7 @@ class SettingsScreen extends StatelessWidget {
                   leading: const Icon(Icons.restart_alt, color: Colors.redAccent),
                   title: const Text('Reset to Defaults', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.w600)),
                   onTap: () {
+                    themeProvider.triggerHaptic();
                     themeProvider.resetToDefaults();
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Settings reset to defaults')),
@@ -70,8 +71,6 @@ class SettingsScreen extends StatelessWidget {
       ),
     );
   }
-
-
 }
 
 class ThemeSelector extends StatelessWidget {
@@ -207,6 +206,18 @@ class AccessibilitySettings extends StatelessWidget {
             Icons.dashboard_customize,
             themeProvider.isSimplifiedUI,
             (val) => themeProvider.setSimplifiedUI(val),
+          ),
+          Divider(color: isDark ? Colors.white10 : Colors.black12, height: 1),
+          _buildSwitchTile(
+            context,
+            'Haptic Feedback',
+            'Enable subtle vibration feedback',
+            Icons.vibration,
+            themeProvider.isHapticEnabled,
+            (val) {
+              themeProvider.setHapticFeedback(val);
+              if (val) themeProvider.triggerHaptic();
+            },
           ),
         ],
       ),
