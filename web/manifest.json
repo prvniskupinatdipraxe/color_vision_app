@@ -1,6 +1,6 @@
 {
-    "name": "color_vision_app",
-    "short_name": "color_vision_app",
+    "name": "Vision Assist Pro",
+    "short_name": "Vision Assist Pro",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#000000",
